@@ -12,8 +12,8 @@ func SetupRoutes(router *gin.Engine) {
 	cfg := config.LoadConfig()
 
 	// Setup different route groups
-	SetupAuthRoutes(router, cfg)  // Authentication API endpoints (/api/auth/*)
-	SetupAPIRoutes(router, cfg)   // Protected JSON API endpoints (/api/*)
-	SetupHTMLRoutes(router, cfg)  // HTML pages
-	SetupCloudflareRoutes(router) // Cloudflare-specific API endpoints
+	SetupAuthRoutes(router, cfg)       // Authentication API endpoints (/api/auth/*)
+	SetupAPIRoutes(router, cfg)        // Protected JSON API endpoints (/api/*)
+	SetupHTMLRoutes(router, cfg)       // HTML pages
+	SetupCloudflareRoutes(router, cfg) // Cloudflare-specific API endpoints
 }
