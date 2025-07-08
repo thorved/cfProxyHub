@@ -1,17 +1,18 @@
 package routes
 
 import (
+	"cfPorxyHub/internal/config"
+
 	"github.com/gin-gonic/gin"
 )
 
 // SetupRoutes configures all routes for the application
 func SetupRoutes(router *gin.Engine) {
-	// Load HTML templates
-	router.LoadHTMLGlob("web/templates/*")
+	// Load config
+	cfg := config.LoadConfig()
 
-	// Serve static files
-	router.Static("/assets", "./web/assets")
 	// Setup different route groups
-	SetupAPIRoutes(router)  // JSON API endpoints
-	SetupHTMLRoutes(router) // HTML pages
+	SetupAPIRoutes(router)        // JSON API endpoints
+	SetupHTMLRoutes(router, cfg)  // HTML pages
+	SetupCloudflareRoutes(router) // Cloudflare-specific API endpoints
 }
