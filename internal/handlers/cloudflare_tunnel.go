@@ -12,19 +12,19 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type CloudflareHandler struct {
+type CloudflareTunnelHandler struct {
 	cfService *services.CloudflareService
 }
 
-// NewCloudflareHandler creates a new Cloudflare handler
-func NewCloudflareHandler(cfService *services.CloudflareService) *CloudflareHandler {
-	return &CloudflareHandler{
+// NewCloudflareTunnelHandler creates a new Cloudflare Tunnel handler
+func NewCloudflareTunnelHandler(cfService *services.CloudflareService) *CloudflareTunnelHandler {
+	return &CloudflareTunnelHandler{
 		cfService: cfService,
 	}
 }
 
 // GetTunnelsByAccountID handles the GET /api/cloudflare/accounts/:id/tunnels endpoint
-func (h *CloudflareHandler) GetTunnelsByAccountID(c *gin.Context) {
+func (h *CloudflareTunnelHandler) GetTunnelsByAccountID(c *gin.Context) {
 	accountID := c.Param("id")
 	if accountID == "" {
 		utils.ErrorResponse(c, "Account ID is required", http.StatusBadRequest)
@@ -48,7 +48,7 @@ func (h *CloudflareHandler) GetTunnelsByAccountID(c *gin.Context) {
 }
 
 // GetTunnelByID handles the GET /api/cloudflare/accounts/:id/tunnels/:tunnel_id endpoint
-func (h *CloudflareHandler) GetTunnelByID(c *gin.Context) {
+func (h *CloudflareTunnelHandler) GetTunnelByID(c *gin.Context) {
 	accountID := c.Param("id")
 	tunnelID := c.Param("tunnel_id")
 
@@ -78,7 +78,7 @@ func (h *CloudflareHandler) GetTunnelByID(c *gin.Context) {
 }
 
 // CreateTunnel handles the POST /api/cloudflare/accounts/:id/tunnels endpoint
-func (h *CloudflareHandler) CreateTunnel(c *gin.Context) {
+func (h *CloudflareTunnelHandler) CreateTunnel(c *gin.Context) {
 	accountID := c.Param("id")
 	if accountID == "" {
 		utils.ErrorResponse(c, "Account ID is required", http.StatusBadRequest)
@@ -108,7 +108,7 @@ func (h *CloudflareHandler) CreateTunnel(c *gin.Context) {
 }
 
 // UpdateTunnel handles the PUT /api/cloudflare/accounts/:id/tunnels/:tunnel_id endpoint
-func (h *CloudflareHandler) UpdateTunnel(c *gin.Context) {
+func (h *CloudflareTunnelHandler) UpdateTunnel(c *gin.Context) {
 	accountID := c.Param("id")
 	tunnelID := c.Param("tunnel_id")
 
@@ -144,7 +144,7 @@ func (h *CloudflareHandler) UpdateTunnel(c *gin.Context) {
 }
 
 // DeleteTunnel handles the DELETE /api/cloudflare/accounts/:id/tunnels/:tunnel_id endpoint
-func (h *CloudflareHandler) DeleteTunnel(c *gin.Context) {
+func (h *CloudflareTunnelHandler) DeleteTunnel(c *gin.Context) {
 	accountID := c.Param("id")
 	tunnelID := c.Param("tunnel_id")
 
@@ -174,7 +174,7 @@ func (h *CloudflareHandler) DeleteTunnel(c *gin.Context) {
 }
 
 // GetTunnelToken handles the GET /api/cloudflare/accounts/:id/tunnels/:tunnel_id/token endpoint
-func (h *CloudflareHandler) GetTunnelToken(c *gin.Context) {
+func (h *CloudflareTunnelHandler) GetTunnelToken(c *gin.Context) {
 	accountID := c.Param("id")
 	tunnelID := c.Param("tunnel_id")
 
@@ -201,46 +201,5 @@ func (h *CloudflareHandler) GetTunnelToken(c *gin.Context) {
 		"account_id": accountID,
 		"tunnel_id":  tunnelID,
 		"token":      token,
-	})
-}
-
-// GetAccounts handles the GET /api/cloudflare/accounts endpoint
-func (h *CloudflareHandler) GetAccounts(c *gin.Context) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-
-	accounts, err := h.cfService.GetCloudflareAccounts(ctx)
-	if err != nil {
-		utils.ErrorResponse(c, "Failed to fetch accounts: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	utils.SuccessResponse(c, gin.H{
-		"message":  "Accounts retrieved successfully",
-		"accounts": accounts,
-		"total":    len(accounts),
-	})
-}
-
-// GetAccountByID handles the GET /api/cloudflare/accounts/:id endpoint
-func (h *CloudflareHandler) GetAccountByID(c *gin.Context) {
-	accountID := c.Param("id")
-	if accountID == "" {
-		utils.ErrorResponse(c, "Account ID is required", http.StatusBadRequest)
-		return
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-
-	account, err := h.cfService.GetCloudflareAccountByID(ctx, accountID)
-	if err != nil {
-		utils.ErrorResponse(c, "Failed to fetch account: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	utils.SuccessResponse(c, gin.H{
-		"message": "Account retrieved successfully",
-		"account": account,
 	})
 }

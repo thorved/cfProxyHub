@@ -20,7 +20,8 @@ func SetupCloudflareRoutes(router *gin.Engine, cfg *config.Config) {
 	}
 
 	// Initialize handlers
-	cfHandler := handlers.NewCloudflareHandler(cfService)
+	cfAccountHandler := handlers.NewCloudflareAccountHandler(cfService)
+	tunnelHandler := handlers.NewCloudflareTunnelHandler(cfService)
 
 	// Cloudflare API routes
 	cloudflare := router.Group("/api/cloudflare")
@@ -29,13 +30,16 @@ func SetupCloudflareRoutes(router *gin.Engine, cfg *config.Config) {
 	cloudflare.Use(middleware.RequireAuth())
 
 	{
-		cloudflare.GET("/accounts", cfHandler.GetAccounts)                                 // JSON API for direct API access
-		cloudflare.GET("/accounts/:id", cfHandler.GetAccountByID)                          // Get specific account by ID
-		cloudflare.GET("/accounts/:id/tunnels", cfHandler.GetTunnelsByAccountID)           // Get tunnels for specific account
-		cloudflare.GET("/accounts/:id/tunnels/:tunnel_id", cfHandler.GetTunnelByID)        // Get specific tunnel by ID
-		cloudflare.POST("/accounts/:id/tunnels", cfHandler.CreateTunnel)                   // Create new tunnel
-		cloudflare.PUT("/accounts/:id/tunnels/:tunnel_id", cfHandler.UpdateTunnel)         // Update existing tunnel
-		cloudflare.DELETE("/accounts/:id/tunnels/:tunnel_id", cfHandler.DeleteTunnel)      // Delete tunnel
-		cloudflare.GET("/accounts/:id/tunnels/:tunnel_id/token", cfHandler.GetTunnelToken) // Get tunnel token
+		// Account routes
+		cloudflare.GET("/accounts", cfAccountHandler.GetAccounts)        // JSON API for direct API access
+		cloudflare.GET("/accounts/:id", cfAccountHandler.GetAccountByID) // Get specific account by ID
+
+		// Tunnel routes
+		cloudflare.GET("/accounts/:id/tunnels", tunnelHandler.GetTunnelsByAccountID)           // Get tunnels for specific account
+		cloudflare.GET("/accounts/:id/tunnels/:tunnel_id", tunnelHandler.GetTunnelByID)        // Get specific tunnel by ID
+		cloudflare.POST("/accounts/:id/tunnels", tunnelHandler.CreateTunnel)                   // Create new tunnel
+		cloudflare.PUT("/accounts/:id/tunnels/:tunnel_id", tunnelHandler.UpdateTunnel)         // Update existing tunnel
+		cloudflare.DELETE("/accounts/:id/tunnels/:tunnel_id", tunnelHandler.DeleteTunnel)      // Delete tunnel
+		cloudflare.GET("/accounts/:id/tunnels/:tunnel_id/token", tunnelHandler.GetTunnelToken) // Get tunnel token
 	}
 }
