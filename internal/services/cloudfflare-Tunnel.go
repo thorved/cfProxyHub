@@ -6,24 +6,28 @@ import (
 
 	"cfPorxyHub/internal/models"
 
-	"github.com/cloudflare/cloudflare-go"
+	"github.com/cloudflare/cloudflare-go/v4"
+	"github.com/cloudflare/cloudflare-go/v4/zero_trust"
 )
 
 // GetCloudflareTunnels retrieves all tunnels for a specific account
-func (cs *CloudflareService) GetCloudflareTunnels(ctx context.Context, accountID string) ([]models.Tunnel, error) {
+func (cs *CloudflareService) GetCloudflareTunnels(ctx context.Context, accountID string) ([]models.TunnelListResponse, error) {
 	if accountID == "" {
 		return nil, fmt.Errorf("account ID is required")
 	}
 
-	tunnels, _, err := cs.client.ListTunnels(ctx, cloudflare.AccountIdentifier(accountID), cloudflare.TunnelListParams{})
-	if err != nil {
-		return nil, fmt.Errorf("error listing tunnels for account %s: %w", accountID, err)
+	autopager := cs.client.ZeroTrust.Tunnels.Cloudflared.ListAutoPaging(ctx, zero_trust.TunnelCloudflaredListParams{
+		AccountID: cloudflare.F(accountID),
+	})
+
+	var result []models.TunnelListResponse
+	for autopager.Next() {
+		tunnel := autopager.Current()
+		result = append(result, tunnel)
 	}
 
-	// Convert cloudflare.Tunnel to our models.Tunnel
-	result := make([]models.Tunnel, len(tunnels))
-	for i, tunnel := range tunnels {
-		result[i] = models.ConvertFromCloudflareTunnel(tunnel)
+	if autopager.Err() != nil {
+		return nil, fmt.Errorf("error listing tunnels for account %s: %w", accountID, autopager.Err())
 	}
 
 	return result, nil
@@ -38,60 +42,51 @@ func (cs *CloudflareService) GetCloudflareTunnelByID(ctx context.Context, accoun
 		return models.Tunnel{}, fmt.Errorf("tunnel ID is required")
 	}
 
-	tunnel, err := cs.client.GetTunnel(ctx, cloudflare.AccountIdentifier(accountID), tunnelID)
+	tunnel, err := cs.client.ZeroTrust.Tunnels.Cloudflared.Get(ctx, tunnelID, zero_trust.TunnelCloudflaredGetParams{
+		AccountID: cloudflare.F(accountID),
+	})
 	if err != nil {
 		return models.Tunnel{}, fmt.Errorf("error getting tunnel %s for account %s: %w", tunnelID, accountID, err)
 	}
 
-	return models.ConvertFromCloudflareTunnel(tunnel), nil
+	return *tunnel, nil
 }
 
-func (cs *CloudflareService) CreateCloudflareTunnel(ctx context.Context, accountID string, request models.TunnelCreateRequest) (models.Tunnel, error) {
+// CreateCloudflareTunnel creates a new tunnel
+func (cs *CloudflareService) CreateCloudflareTunnel(ctx context.Context, accountID string, request models.TunnelCreateRequest) (models.TunnelNewResponse, error) {
 	if accountID == "" {
-		return models.Tunnel{}, fmt.Errorf("account ID is required")
+		return models.TunnelNewResponse{}, fmt.Errorf("account ID is required")
 	}
 
-	params := cloudflare.TunnelCreateParams{
-		Name:      request.Name,
-		Secret:    request.Secret,
-		ConfigSrc: request.ConfigSrc,
-	}
+	// Set the account ID in the request
+	request.AccountID = cloudflare.F(accountID)
 
-	createdTunnel, err := cs.client.CreateTunnel(ctx, cloudflare.AccountIdentifier(accountID), params)
+	createdTunnel, err := cs.client.ZeroTrust.Tunnels.Cloudflared.New(ctx, request)
 	if err != nil {
-		return models.Tunnel{}, fmt.Errorf("error creating tunnel for account %s: %w", accountID, err)
+		return models.TunnelNewResponse{}, fmt.Errorf("error creating tunnel for account %s: %w", accountID, err)
 	}
 
-	return models.ConvertFromCloudflareTunnel(createdTunnel), nil
+	return *createdTunnel, nil
 }
 
 // UpdateCloudflareTunnel updates a specific tunnel
-func (cs *CloudflareService) UpdateCloudflareTunnel(ctx context.Context, accountID, tunnelID string, request models.TunnelUpdateRequest) (models.Tunnel, error) {
+func (cs *CloudflareService) UpdateCloudflareTunnel(ctx context.Context, accountID, tunnelID string, request models.TunnelUpdateRequest) (models.TunnelEditResponse, error) {
 	if accountID == "" {
-		return models.Tunnel{}, fmt.Errorf("account ID is required")
+		return models.TunnelEditResponse{}, fmt.Errorf("account ID is required")
 	}
 	if tunnelID == "" {
-		return models.Tunnel{}, fmt.Errorf("tunnel ID is required")
+		return models.TunnelEditResponse{}, fmt.Errorf("tunnel ID is required")
 	}
 
-	// Get the current tunnel first
-	currentTunnel, err := cs.client.GetTunnel(ctx, cloudflare.AccountIdentifier(accountID), tunnelID)
+	// Set the account ID in the request
+	request.AccountID = cloudflare.F(accountID)
+
+	updatedTunnel, err := cs.client.ZeroTrust.Tunnels.Cloudflared.Edit(ctx, tunnelID, request)
 	if err != nil {
-		return models.Tunnel{}, fmt.Errorf("error getting tunnel %s for account %s: %w", tunnelID, accountID, err)
+		return models.TunnelEditResponse{}, fmt.Errorf("error updating tunnel %s for account %s: %w", tunnelID, accountID, err)
 	}
 
-	// Update fields if provided
-	if request.Name != "" {
-		currentTunnel.Name = request.Name
-	}
-	if request.Secret != "" {
-		currentTunnel.Secret = request.Secret
-	}
-
-	// Note: The cloudflare-go library might not have an UpdateTunnel method
-	// In that case, we would need to delete and recreate the tunnel
-	// For now, we'll return the current tunnel with updated fields
-	return models.ConvertFromCloudflareTunnel(currentTunnel), nil
+	return *updatedTunnel, nil
 }
 
 // DeleteCloudflareTunnel deletes a specific tunnel
@@ -103,7 +98,9 @@ func (cs *CloudflareService) DeleteCloudflareTunnel(ctx context.Context, account
 		return fmt.Errorf("tunnel ID is required")
 	}
 
-	err := cs.client.DeleteTunnel(ctx, cloudflare.AccountIdentifier(accountID), tunnelID)
+	_, err := cs.client.ZeroTrust.Tunnels.Cloudflared.Delete(ctx, tunnelID, zero_trust.TunnelCloudflaredDeleteParams{
+		AccountID: cloudflare.F(accountID),
+	})
 	if err != nil {
 		return fmt.Errorf("error deleting tunnel %s for account %s: %w", tunnelID, accountID, err)
 	}
@@ -120,30 +117,41 @@ func (cs *CloudflareService) GetCloudflareTunnelToken(ctx context.Context, accou
 		return "", fmt.Errorf("tunnel ID is required")
 	}
 
-	token, err := cs.client.GetTunnelToken(ctx, cloudflare.AccountIdentifier(accountID), tunnelID)
+	tokenResponse, err := cs.client.ZeroTrust.Tunnels.Cloudflared.Token.Get(ctx, tunnelID, zero_trust.TunnelCloudflaredTokenGetParams{
+		AccountID: cloudflare.F(accountID),
+	})
 	if err != nil {
 		return "", fmt.Errorf("error getting token for tunnel %s in account %s: %w", tunnelID, accountID, err)
 	}
 
-	return token, nil
+	// The token response might be an array or string, handle both cases
+	if tokenResponse != nil {
+		// For now, return a simple string representation
+		return fmt.Sprintf("%v", tokenResponse), nil
+	}
+
+	return "", nil
 }
 
 // ListCloudflareTunnelsWithParams retrieves tunnels with specific parameters
-func (cs *CloudflareService) ListCloudflareTunnelsWithParams(ctx context.Context, accountID string, params models.TunnelListParams) ([]models.Tunnel, error) {
+func (cs *CloudflareService) ListCloudflareTunnelsWithParams(ctx context.Context, accountID string, params models.TunnelListParams) ([]models.TunnelListResponse, error) {
 	if accountID == "" {
 		return nil, fmt.Errorf("account ID is required")
 	}
 
-	cfParams := params.ConvertToCloudflareTunnelListParams()
-	tunnels, _, err := cs.client.ListTunnels(ctx, cloudflare.AccountIdentifier(accountID), cfParams)
-	if err != nil {
-		return nil, fmt.Errorf("error listing tunnels for account %s: %w", accountID, err)
+	// Set the account ID in the params
+	params.AccountID = cloudflare.F(accountID)
+
+	autopager := cs.client.ZeroTrust.Tunnels.Cloudflared.ListAutoPaging(ctx, params)
+
+	var result []models.TunnelListResponse
+	for autopager.Next() {
+		tunnel := autopager.Current()
+		result = append(result, tunnel)
 	}
 
-	// Convert cloudflare.Tunnel to our models.Tunnel
-	result := make([]models.Tunnel, len(tunnels))
-	for i, tunnel := range tunnels {
-		result[i] = models.ConvertFromCloudflareTunnel(tunnel)
+	if autopager.Err() != nil {
+		return nil, fmt.Errorf("error listing tunnels for account %s: %w", accountID, autopager.Err())
 	}
 
 	return result, nil

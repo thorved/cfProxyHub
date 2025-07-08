@@ -3,32 +3,33 @@ package services
 import (
 	"fmt"
 
-	"github.com/cloudflare/cloudflare-go"
+	"github.com/cloudflare/cloudflare-go/v4"
+	"github.com/cloudflare/cloudflare-go/v4/option"
 )
 
 type CloudflareService struct {
-	client *cloudflare.API
+	client *cloudflare.Client
 }
 
 // NewCloudflareService creates a new Cloudflare service instance
 func NewCloudflareService(apiToken, apiKey, email string) (*CloudflareService, error) {
-	var client *cloudflare.API
-	var err error
+	var client *cloudflare.Client
 
-	// Prefer API Token over API Key + Email
-	if apiToken != "" {
-		client, err = cloudflare.NewWithAPIToken(apiToken)
-	} else if apiKey != "" && email != "" {
-		client, err = cloudflare.New(apiKey, email)
+	// Priority: API Token first, then API Key + Email
+	if apiToken != "" && apiToken != "your_cloudflare_api_token_here" {
+		client = cloudflare.NewClient(option.WithAPIToken(apiToken))
+	} else if apiKey != "" && email != "" && apiKey != "your_cloudflare_api_key_here" {
+		client = cloudflare.NewClient(
+			option.WithAPIKey(apiKey),
+			option.WithAPIEmail(email),
+		)
 	} else {
-		return nil, fmt.Errorf("either API token or API key with email must be provided")
+		return nil, fmt.Errorf("either API token or API key with email must be provided and properly configured")
 	}
 
-	if err != nil {
-		return nil, fmt.Errorf("failed to create Cloudflare client: %w", err)
-	}
-
-	return &CloudflareService{
+	service := &CloudflareService{
 		client: client,
-	}, nil
+	}
+
+	return service, nil
 }

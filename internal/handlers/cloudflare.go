@@ -23,46 +23,6 @@ func NewCloudflareHandler(cfService *services.CloudflareService) *CloudflareHand
 	}
 }
 
-// GetAccounts handles the GET /api/cloudflare/accounts endpoint
-func (h *CloudflareHandler) GetAccounts(c *gin.Context) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-
-	accounts, err := h.cfService.GetCloudflareAccounts(ctx)
-	if err != nil {
-		utils.ErrorResponse(c, "Failed to fetch accounts: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	utils.SuccessResponse(c, gin.H{
-		"message":  "Accounts retrieved successfully",
-		"accounts": accounts,
-	})
-}
-
-// GetAccountByID handles the GET /api/cloudflare/accounts/:id endpoint
-func (h *CloudflareHandler) GetAccountByID(c *gin.Context) {
-	accountID := c.Param("id")
-	if accountID == "" {
-		utils.ErrorResponse(c, "Account ID is required", http.StatusBadRequest)
-		return
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-
-	account, err := h.cfService.GetCloudflareAccountByID(ctx, accountID)
-	if err != nil {
-		utils.ErrorResponse(c, "Failed to fetch account: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	utils.SuccessResponse(c, gin.H{
-		"message": "Account retrieved successfully",
-		"account": account,
-	})
-}
-
 // GetTunnelsByAccountID handles the GET /api/cloudflare/accounts/:id/tunnels endpoint
 func (h *CloudflareHandler) GetTunnelsByAccountID(c *gin.Context) {
 	accountID := c.Param("id")
@@ -241,5 +201,46 @@ func (h *CloudflareHandler) GetTunnelToken(c *gin.Context) {
 		"account_id": accountID,
 		"tunnel_id":  tunnelID,
 		"token":      token,
+	})
+}
+
+// GetAccounts handles the GET /api/cloudflare/accounts endpoint
+func (h *CloudflareHandler) GetAccounts(c *gin.Context) {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	accounts, err := h.cfService.GetCloudflareAccounts(ctx)
+	if err != nil {
+		utils.ErrorResponse(c, "Failed to fetch accounts: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	utils.SuccessResponse(c, gin.H{
+		"message":  "Accounts retrieved successfully",
+		"accounts": accounts,
+		"total":    len(accounts),
+	})
+}
+
+// GetAccountByID handles the GET /api/cloudflare/accounts/:id endpoint
+func (h *CloudflareHandler) GetAccountByID(c *gin.Context) {
+	accountID := c.Param("id")
+	if accountID == "" {
+		utils.ErrorResponse(c, "Account ID is required", http.StatusBadRequest)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	account, err := h.cfService.GetCloudflareAccountByID(ctx, accountID)
+	if err != nil {
+		utils.ErrorResponse(c, "Failed to fetch account: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	utils.SuccessResponse(c, gin.H{
+		"message": "Account retrieved successfully",
+		"account": account,
 	})
 }

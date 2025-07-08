@@ -29,8 +29,8 @@ func SetupCloudflareRoutes(router *gin.Engine, cfg *config.Config) {
 	cloudflare.Use(middleware.RequireAuth())
 
 	{
-		cloudflare.GET("/accounts", cfHandler.GetAccounts) // JSON API for direct API access
-		cloudflare.GET("/accounts/:id", cfHandler.GetAccountByID)
+		cloudflare.GET("/accounts", cfHandler.GetAccounts)                                 // JSON API for direct API access
+		cloudflare.GET("/accounts/:id", cfHandler.GetAccountByID)                          // Get specific account by ID
 		cloudflare.GET("/accounts/:id/tunnels", cfHandler.GetTunnelsByAccountID)           // Get tunnels for specific account
 		cloudflare.GET("/accounts/:id/tunnels/:tunnel_id", cfHandler.GetTunnelByID)        // Get specific tunnel by ID
 		cloudflare.POST("/accounts/:id/tunnels", cfHandler.CreateTunnel)                   // Create new tunnel
