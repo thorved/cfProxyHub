@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Select Cloudflare Account - CF Proxy Hub</title>
+    <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.6/dist/htmx.min.js" integrity="sha384-Akqfrbj/HpNVo8k11SXBb6TlBWmXXlYQrCSqEWmyKJe+hDm3Z/B2WVG4smwBkRVm" crossorigin="anonymous"></script>
+    <!-- plugins:css -->
+    <link rel="stylesheet" href="assets/vendors/mdi/css/materialdesignicons.min.css">
+    <link rel="stylesheet" href="assets/vendors/css/vendor.bundle.base.css">
+    <!-- endinject -->
+    <!-- Plugin css for this page -->
+    <!-- End plugin css for this page -->
+    <!-- inject:css -->
+    <!-- endinject -->
+    <!-- Layout styles -->
+    <link rel="stylesheet" href="assets/css/style.css">
+    <!-- End layout styles -->
+    <link rel="shortcut icon" href="assets/images/favicon.png" />
+  </head>
+  <body>
+    <div class="container-scroller">
+      <!-- partial:partials/_sidebar.html -->
+      <div hx-get="/components/sidebar" hx-trigger="load once"></div>
+      <!-- partial -->
+      <div class="container-fluid page-body-wrapper">
+        <!-- partial:partials/_navbar.html -->
+        <div hx-get="/components/header" hx-trigger="load once"></div>
+        <!-- partial -->
+        <div class="main-panel">
+          <div class="content-wrapper">
+            <div class="page-header">
+              <h3 class="page-title">
+                <i class="mdi mdi-account-multiple text-primary"></i>
+                Select Cloudflare Account
+              </h3>
+              <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                  <li class="breadcrumb-item"><a href="index.html">Dashboard</a></li>
+                  <li class="breadcrumb-item active" aria-current="page">Account Selection</li>
+                </ol>
+              </nav>
+            </div>
+            <div class="row">
+              <!-- Account Selection Header Card -->
+              <div class="col-12 grid-margin stretch-card">
+                <div class="card">
+                  <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between">
+                      <div>
+                        <h4 class="card-title mb-2">
+                          <i class="mdi mdi-cloud text-info mr-2"></i>
+                          Choose Your Cloudflare Account
+                        </h4>
+                        <p class="card-description text-muted">
+                          Select the Cloudflare account you want to manage. Your selection will be applied to all subsequent operations.
+                        </p>
+                      </div>
+                      <div class="d-flex">
+                        <button class="btn btn-primary btn-sm mr-2" id="refreshAccounts">
+                          <i class="mdi mdi-refresh"></i> Refresh
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm" id="addAccount" style="display: none;">
+                          <i class="mdi mdi-plus"></i> Add Account
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Loading State -->
+              <div class="col-12" id="loadingState" style="display: none;">
+                <div class="card">
+                  <div class="card-body text-center py-5">
+                    <div class="spinner-border text-primary mb-3" role="status">
+                      <span class="sr-only">Loading...</span>
+                    </div>
+                    <h5 class="text-muted">Loading your Cloudflare accounts...</h5>
+                    <p class="text-muted">This may take a few moments</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Account Grid -->
+              <div class="col-12" id="accountsGrid">
+                <div class="row" id="accountsList">
+                  <!-- Initial loading placeholder - will be replaced by HTMX -->
+                  <div class="col-12 text-center py-5">
+                    <div class="spinner-border text-primary mb-3" role="status">
+                      <span class="sr-only">Loading...</span>
+                    </div>
+                    <p class="text-muted">Loading your Cloudflare accounts...</p>
+
+              <!-- Empty State -->
+              <div class="col-12" id="emptyState" style="display: none;">
+                <div class="card">
+                  <div class="card-body text-center py-5">
+                    <div class="preview-icon bg-light rounded-circle mx-auto mb-4" style="width: 80px; height: 80px; line-height: 80px;">
+                      <i class="mdi mdi-account-off text-muted" style="font-size: 32px;"></i>
+                    </div>
+                    <h4 class="text-muted mb-3">No Accounts Found</h4>
+                    <p class="text-muted mb-4">You haven't connected any Cloudflare accounts yet. Add your first account to get started.</p>
+                    <button class="btn btn-primary">
+                      <i class="mdi mdi-plus mr-2"></i>Add Your First Account
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- content-wrapper ends -->
+          <!-- partial:partials/_footer.html -->
+          <div hx-get="/components/footer" hx-trigger="load once"></div>
+          <!-- partial -->
+        </div>
+        <!-- main-panel ends -->
+      </div>
+      <!-- page-body-wrapper ends -->
+    </div>
+    <!-- container-scroller -->
+    <!-- plugins:js -->
+    <script src="assets/vendors/js/vendor.bundle.base.js"></script>
+    <!-- endinject -->
+    <!-- Plugin js for this page -->
+    <!-- End plugin js for this page -->
+    <!-- inject:js -->
+    <script src="assets/js/off-canvas.js"></script>
+    <script src="assets/js/hoverable-collapse.js"></script>
+    <script src="assets/js/misc.js"></script>
+    <script src="assets/js/settings.js"></script>
+    <script src="assets/js/todolist.js"></script>
+    <!-- endinject -->
+    <!-- Custom js for this page -->
+    <script src="assets/js/sidebar-account.js"></script>
+    <script>
+      $(document).ready(function() {
+        // Load accounts immediately on page load
+        loadAccounts();
+        
+        // Account selection functionality
+        $(document).on('click', '.select-account-btn', function() {
+          const accountRow = $(this).closest('.account-row');
+          const accountId = accountRow.data('account-id');
+          const accountName = accountRow.data('account-name');
+          
+          // Remove previous selection
+          $('.account-row').removeClass('account-selected');
+          $('.select-account-btn').removeClass('btn-selected').addClass('btn-outline-success')
+            .html('<i class="mdi mdi-check-circle mr-1"></i>Select');
+          
+          // Mark current selection
+          accountRow.addClass('account-selected');
+          $(this).removeClass('btn-outline-success').addClass('btn-selected')
+            .html('<i class="mdi mdi-check mr-1"></i>Selected');
+          
+          // Show success message
+          showNotification('success', `${accountName} has been selected successfully!`);
+          
+          // Store selection
+          localStorage.setItem('selectedAccount', JSON.stringify({
+            id: accountId,
+            name: accountName
+          }));
+          
+          // Dispatch custom event to update sidebar immediately
+          window.dispatchEvent(new CustomEvent('accountSelected', {
+            detail: { id: accountId, name: accountName }
+          }));
+        });
+        
+        // Add account functionality (hidden for now)
+        $(document).on('click', '#addAccount, #addNewAccountBtn', function() {
+          showNotification('info', 'Add account functionality would be implemented here.');
+        });
+        
+        // Manual refresh functionality
+        $(document).on('click', '#refreshAccounts', function() {
+          loadAccounts();
+        });
+      });
+      
+      // Load accounts function
+      function loadAccounts() {
+        $('#loadingState').show();
+        $('#accountsGrid').hide();
+        $('#emptyState').hide();
+        
+        // Use HTMX to load accounts
+        htmx.ajax('GET', '/htmx/accounts', {
+          target: '#accountsList',
+          swap: 'innerHTML'
+        }).then(function() {
+          $('#loadingState').hide();
+          $('#accountsGrid').show();
+          showNotification('success', 'Accounts loaded successfully!');
+          // Restore selection after loading
+          setTimeout(restoreSelection, 100);
+        }).catch(function() {
+          $('#loadingState').hide();
+          $('#accountsGrid').hide();
+          $('#emptyState').show();
+          showNotification('error', 'Failed to load accounts. Please check your connection.');
+        });
+      }
+      
+      // Load account selection from localStorage (global function)
+      function restoreSelection() {
+        const savedAccount = localStorage.getItem('selectedAccount');
+        if (savedAccount) {
+          const account = JSON.parse(savedAccount);
+          $(`.account-row[data-account-id="${account.id}"]`)
+            .addClass('account-selected')
+            .find('.select-account-btn')
+            .removeClass('btn-outline-success').addClass('btn-selected')
+            .html('<i class="mdi mdi-check mr-1"></i>Selected');
+        }
+      }
+      
+      // Notification function
+      function showNotification(type, message) {
+        const alertClass = type === 'success' ? 'alert-success' : 
+                          type === 'error' ? 'alert-danger' : 'alert-info';
+        
+        const notification = $(`
+          <div class="alert ${alertClass} alert-dismissible fade show position-fixed" 
+               style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
+            <strong>${type.charAt(0).toUpperCase() + type.slice(1)}:</strong> ${message}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+        `);
+        
+        $('body').append(notification);
+        
+        setTimeout(() => {
+          notification.alert('close');
+        }, 5000);
+      }
+    </script>
+    
+    <style>
+      /* Account row styling */
+      .account-row {
+        transition: all 0.3s ease;
+        cursor: pointer;
+        animation: fadeInUp 0.3s ease-out;
+      }
+      
+      .account-row:hover {
+        background-color: #f8f9fa !important;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      }
+      
+      .account-row:hover td {
+        color: #343a40 !important;
+        background-color: transparent !important;
+      }
+      
+      /* Selected account styling */
+      .account-row.account-selected {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        color: #f8f9ff !important;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.25);
+        border-left: 4px solid #5a67d8;
+      }
+      
+      .account-row.account-selected td {
+        border-color: rgba(248, 249, 255, 0.2);
+        color: #f8f9ff !important;
+      }
+      
+      .account-row.account-selected h6 {
+        color: #ffffff !important;
+        font-weight: 600;
+      }
+      
+      .account-row.account-selected .text-muted {
+        color: rgba(248, 249, 255, 0.9) !important;
+      }
+      
+      .account-row.account-selected code {
+        background-color: rgba(248, 249, 255, 0.15) !important;
+        color: #ffffff !important;
+        border: 1px solid rgba(248, 249, 255, 0.3);
+      }
+      
+      .account-row.account-selected .badge {
+        background-color: rgba(248, 249, 255, 0.2) !important;
+        color: #ffffff !important;
+        border: 1px solid rgba(248, 249, 255, 0.3);
+      }
+      
+      /* Table styling */
+      .table th {
+        border-top: none;
+        font-weight: 600;
+        color: #ffffff;
+        background-color: #000000;
+        padding: 1rem 0.75rem;
+      }
+      
+      .table td {
+        vertical-align: middle;
+        padding: 1rem 0.75rem;
+        border-color: #e9ecef;
+      }
+      
+      .table-responsive {
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid #e9ecef;
+      }
+      
+      .table {
+        margin-bottom: 0;
+      }
+      
+      /* Button styling */
+      .btn-outline-success {
+        color: #28a745;
+        border-color: #28a745;
+        background-color: transparent;
+        transition: all 0.3s ease;
+      }
+      
+      .btn-outline-success:hover {
+        color: white;
+        background-color: #28a745;
+        border-color: #28a745;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(40, 167, 69, 0.3);
+      }
+      
+      .btn-selected {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        border-color: #5a67d8 !important;
+        color: #ffffff !important;
+        font-weight: 600;
+        box-shadow: 0 3px 8px rgba(102, 126, 234, 0.3);
+      }
+      
+      .btn-selected:hover {
+        background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%) !important;
+        border-color: #553c9a !important;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+      }
+      
+      /* Row animations */
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translate3d(0, 20px, 0);
+        }
+        to {
+          opacity: 1;
+          transform: translate3d(0, 0, 0);
+        }
+      }
+      
+      .account-row:nth-child(1) { animation-delay: 0.1s; }
+      .account-row:nth-child(2) { animation-delay: 0.2s; }
+      .account-row:nth-child(3) { animation-delay: 0.3s; }
+      .account-row:nth-child(4) { animation-delay: 0.4s; }
+      .account-row:nth-child(5) { animation-delay: 0.5s; }
+    </style>
+    <!-- End custom js for this page -->
+  </body>
+</html>

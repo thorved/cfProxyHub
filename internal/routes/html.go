@@ -6,6 +6,7 @@ import (
 	"cfPorxyHub/internal/config"
 	"cfPorxyHub/internal/handlers"
 	"cfPorxyHub/internal/middleware"
+	"cfPorxyHub/internal/services"
 
 	"github.com/gin-gonic/gin"
 )
@@ -41,10 +42,25 @@ func SetupHTMLRoutes(router *gin.Engine, cfg *config.Config) {
 
 	// Protected routes (authentication required)
 	router.GET("/", middleware.AuthMiddleware(), func(c *gin.Context) {
-		c.HTML(http.StatusOK, "index.html", gin.H{})
+		c.HTML(http.StatusOK, "Dashboard.html", gin.H{})
 	})
 
-	router.GET("/accounts", middleware.AuthMiddleware(), func(c *gin.Context) {
-		c.HTML(http.StatusOK, "accounts.html", gin.H{})
+	router.GET("/CloudflareAccounts", middleware.AuthMiddleware(), func(c *gin.Context) {
+		c.HTML(http.StatusOK, "CloudflareAccounts.html", gin.H{})
 	})
+
+	// HTMX API endpoints for dynamic content loading
+	htmxAPI := router.Group("/htmx")
+	htmxAPI.Use(middleware.AuthMiddleware())
+
+	// Initialize Cloudflare service and handler for HTMX endpoints
+	cfService, err := services.NewCloudflareService(cfg.CloudflareAPIToken, cfg.CloudflareAPIKey, cfg.CloudflareEmail)
+	if err != nil {
+		// Handle error appropriately in production
+		panic("Failed to initialize Cloudflare service: " + err.Error())
+	}
+	cfHandler := handlers.NewCloudflareHandler(cfService)
+
+	// HTMX endpoints
+	htmxAPI.GET("/accounts", cfHandler.GetAccountsHTML)
 }

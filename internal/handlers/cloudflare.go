@@ -70,43 +70,132 @@ func (h *CloudflareHandler) GetAccountsHTML(c *gin.Context) {
 
 	accounts, err := h.cfService.GetCloudflareAccounts(ctx)
 	if err != nil {
-		c.HTML(http.StatusInternalServerError, "", gin.H{
-			"error": "Failed to fetch accounts: " + err.Error(),
-		})
+		c.String(http.StatusInternalServerError, `
+			<div class="col-12">
+				<div class="alert alert-danger" role="alert">
+					<i class="mdi mdi-alert-circle mr-2"></i>
+					Failed to fetch accounts: %s
+				</div>
+			</div>
+		`, err.Error())
 		return
 	}
 
 	if len(accounts) == 0 {
-		c.String(http.StatusOK, `<div class="loading">No accounts found.</div>`)
+		c.String(http.StatusOK, `
+			<div class="col-12">
+				<div class="card">
+					<div class="card-body text-center py-5">
+						<div class="preview-icon bg-light rounded-circle mx-auto mb-3" style="width: 80px; height: 80px; display: flex; align-items: center; justify-content: center;">
+							<i class="mdi mdi-account-off text-muted" style="font-size: 32px;"></i>
+						</div>
+						<h5 class="text-muted mb-2">No Accounts Found</h5>
+						<p class="text-muted">No Cloudflare accounts were found. Please check your API credentials.</p>
+						<button class="btn btn-primary btn-sm" onclick="location.reload()">
+							<i class="mdi mdi-refresh mr-2"></i>Reload Page
+						</button>
+					</div>
+				</div>
+			</div>
+		`)
 		return
 	}
 
 	var html string
+
+	// Create a single card with a list of accounts
+	html = `<div class="col-12">
+		<div class="card">
+			<div class="card-body">
+				<h5 class="card-title mb-4">
+					<i class="mdi mdi-cloud text-info mr-2"></i>
+					Available Cloudflare Accounts
+				</h5>
+				<div class="table-responsive">
+					<table class="table table-hover">
+						<thead>
+							<tr>
+								<th>Account</th>
+								<th>Type</th>
+								<th>Created</th>
+								<th>Account ID</th>
+								<th>Action</th>
+							</tr>
+						</thead>
+						<tbody>`
+
 	for _, account := range accounts {
-		createdDate := ""
+		createdDate := "N/A"
 		if !account.CreatedOn.IsZero() {
-			createdDate = account.CreatedOn.Format("2006-01-02")
+			createdDate = account.CreatedOn.Format("Jan 2, 2006")
 		}
 
-		accountType := ""
-		if account.Type != "" {
-			accountType = fmt.Sprintf(`<div class="account-type"><strong>Type:</strong> %s</div>`, account.Type)
+		accountType := account.Type
+		if accountType == "" {
+			accountType = "Standard"
 		}
 
-		createdOnDiv := ""
-		if createdDate != "" {
-			createdOnDiv = fmt.Sprintf(`<div class="account-type"><strong>Created:</strong> %s</div>`, createdDate)
+		// Determine type badge color and fix type display
+		badgeColor := "badge-secondary"
+		typeDisplay := accountType
+		switch accountType {
+		case "Enterprise":
+			badgeColor = "badge-dark"
+			typeDisplay = "Enterprise"
+		case "Business":
+			badgeColor = "badge-success"
+			typeDisplay = "Business"
+		case "Pro":
+			badgeColor = "badge-info"
+			typeDisplay = "Pro"
+		case "Standard":
+			badgeColor = "badge-secondary"
+			typeDisplay = "Standard"
+		default:
+			badgeColor = "badge-light text-dark"
+			typeDisplay = "Standard"
 		}
 
 		html += fmt.Sprintf(`
-			<div class="account-card">
-				<div class="account-name">%s</div>
-				<div><strong>ID:</strong> <span class="account-id">%s</span></div>
-				%s
-				%s
-			</div>
-		`, account.Name, account.ID, accountType, createdOnDiv)
+							<tr class="account-row" data-account-id="%s" data-account-name="%s">
+								<td>
+									<div class="d-flex align-items-center">
+										<div class="preview-icon bg-gradient-primary rounded-circle mr-3" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+											<i class="mdi mdi-account-circle text-white"></i>
+										</div>
+										<div>
+											<h6 class="mb-1 font-weight-medium">%s</h6>
+											<p class="text-muted small mb-0">Active Account</p>
+										</div>
+									</div>
+								</td>
+								<td>
+									<span class="badge %s px-3 py-1">%s</span>
+								</td>
+								<td class="text-muted">%s</td>
+								<td>
+									<code class="small bg-light text-dark px-2 py-1 rounded">%s</code>
+								</td>
+								<td>
+									<button class="btn btn-outline-success btn-sm select-account-btn" 
+											data-account-id="%s" 
+											data-account-name="%s">
+										<i class="mdi mdi-check-circle mr-1"></i>
+										Select
+									</button>
+								</td>
+							</tr>`,
+			account.ID, account.Name, account.Name, badgeColor, typeDisplay,
+			createdDate, account.ID[:8]+"...", account.ID, account.Name)
 	}
+
+	html += `
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+	</div>`
 
 	c.String(http.StatusOK, html)
 }

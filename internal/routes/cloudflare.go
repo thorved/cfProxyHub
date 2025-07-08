@@ -31,7 +31,6 @@ func SetupCloudflareRoutes(router *gin.Engine) {
 	cloudflare.Use(middleware.RequireAuth())
 
 	{
-		cloudflare.GET("/accounts", cfHandler.GetAccountsHTML)  // HTMX-compatible HTML response
 		cloudflare.GET("/accounts/json", cfHandler.GetAccounts) // JSON API for direct API access
 		cloudflare.GET("/accounts/:id", cfHandler.GetAccountByID)
 	}
