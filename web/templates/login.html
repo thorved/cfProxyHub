@@ -5,7 +5,6 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>Corona Admin</title>
-    <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.6/dist/htmx.min.js" integrity="sha384-Akqfrbj/HpNVo8k11SXBb6TlBWmXXlYQrCSqEWmyKJe+hDm3Z/B2WVG4smwBkRVm" crossorigin="anonymous"></script>
     <!-- plugins:css -->
     <link rel="stylesheet" href="assets/vendors/mdi/css/materialdesignicons.min.css">
     <link rel="stylesheet" href="assets/vendors/css/vendor.bundle.base.css">
@@ -27,19 +26,18 @@
             <div class="card col-lg-4 mx-auto">
               <div class="card-body px-5 py-5">
                 <h3 class="card-title text-left mb-3">Login</h3>
-                {{if .error}}
-                <div class="alert alert-danger" role="alert">
-                  {{.error}}
+                <div id="error-message" class="alert alert-danger" role="alert" style="display: none;">
                 </div>
-                {{end}}
-                <form method="POST" action="/login">
+                <div id="success-message" class="alert alert-success" role="alert" style="display: none;">
+                </div>
+                <form id="loginForm">
                   <div class="form-group">
                     <label>Username or email *</label>
-                    <input type="text" name="username" class="form-control p_input" required>
+                    <input type="text" id="username" name="username" class="form-control p_input" required>
                   </div>
                   <div class="form-group">
                     <label>Password *</label>
-                    <input type="password" name="password" class="form-control p_input" required>
+                    <input type="password" id="password" name="password" class="form-control p_input" required>
                   </div>
                   <div class="form-group d-flex align-items-center justify-content-between">
                     <div class="form-check">
@@ -49,7 +47,7 @@
                     <a href="#" class="forgot-pass">Forgot password</a>
                   </div>
                   <div class="text-center">
-                    <button type="submit" class="btn btn-primary btn-block enter-btn">Login</button>
+                    <button type="submit" id="loginBtn" class="btn btn-primary btn-block enter-btn">Login</button>
                   </div>
                 </form>
               </div>
@@ -74,5 +72,62 @@
     <script src="assets/js/settings.js"></script>
     <script src="assets/js/todolist.js"></script>
     <!-- endinject -->
+    <script>
+    document.getElementById('loginForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        const loginBtn = document.getElementById('loginBtn');
+        const errorDiv = document.getElementById('error-message');
+        const successDiv = document.getElementById('success-message');
+        
+        // Hide previous messages
+        errorDiv.style.display = 'none';
+        successDiv.style.display = 'none';
+        
+        // Show loading state
+        loginBtn.disabled = true;
+        loginBtn.textContent = 'Logging in...';
+        
+        try {
+            const response = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    username: username,
+                    password: password
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                // Login successful
+                successDiv.textContent = data.message || 'Login successful!';
+                successDiv.style.display = 'block';
+                
+                // Redirect to dashboard after a short delay
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 1000);
+            } else {
+                // Login failed
+                errorDiv.textContent = data.error || 'Login failed. Please try again.';
+                errorDiv.style.display = 'block';
+            }
+        } catch (error) {
+            // Network or other error
+            errorDiv.textContent = 'Network error. Please try again.';
+            errorDiv.style.display = 'block';
+        } finally {
+            // Reset button state
+            loginBtn.disabled = false;
+            loginBtn.textContent = 'Login';
+        }
+    });
+    </script>
   </body>
 </html>

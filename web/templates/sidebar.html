@@ -14,8 +14,11 @@
                   </div>
                 </div>
                 <div class="profile-name">
-                  <h5 class="mb-0 font-weight-normal text-truncate" id="current-account-name" title="Select Account" data-toggle="tooltip" data-placement="top">Select Account</h5>
-                  <span class="text-truncate d-block" id="current-account-id" title="No account selected" data-toggle="tooltip" data-placement="bottom">No account selected</span>
+                  <h5 class="mb-0 font-weight-normal text-truncate account-name" id="current-account-name" title="Select Account" data-toggle="tooltip" data-placement="top">
+                    <span class="account-status-indicator" id="account-status"></span>
+                    Select Account
+                  </h5>
+                  <span class="text-truncate d-block account-id" id="current-account-id" title="No account selected" data-toggle="tooltip" data-placement="bottom">No account selected</span>
                 </div>
               </div>
               <a href="#" id="profile-dropdown" data-toggle="dropdown"><i class="mdi mdi-dots-vertical"></i></a>
@@ -280,6 +283,77 @@
           border-bottom-color: #2c2c54;
         }
         
+        /* Active state styling for navigation items */
+        .sidebar .nav-item.menu-items.active > .nav-link,
+        .sidebar .nav-item.menu-items > .nav-link.active {
+          background: linear-gradient(135deg, #667eea, #764ba2);
+          color: #ffffff !important;
+          border-radius: 8px;
+          box-shadow: 0 3px 12px rgba(102, 126, 234, 0.3);
+          transform: translateX(4px);
+        }
+        
+        .sidebar .nav-item.menu-items.active > .nav-link .menu-icon i,
+        .sidebar .nav-item.menu-items > .nav-link.active .menu-icon i {
+          color: #ffffff !important;
+        }
+        
+        .sidebar .nav-item.menu-items.active > .nav-link .menu-title,
+        .sidebar .nav-item.menu-items > .nav-link.active .menu-title {
+          color: #ffffff !important;
+          font-weight: 600;
+        }
+        
+        .sidebar .nav-item.menu-items.active > .nav-link .menu-arrow,
+        .sidebar .nav-item.menu-items > .nav-link.active .menu-arrow {
+          color: #ffffff !important;
+        }
+        
+        /* Sub-menu active states */
+        .sidebar .nav-item .sub-menu .nav-item.active > .nav-link,
+        .sidebar .nav-item .sub-menu .nav-item > .nav-link.active {
+          background: rgba(102, 126, 234, 0.1);
+          color: #667eea !important;
+          border-radius: 6px;
+          padding-left: 2rem;
+          border-left: 3px solid #667eea;
+          font-weight: 500;
+        }
+        
+        /* Hover effects with active state consideration */
+        .sidebar .nav-item.menu-items:not(.active) > .nav-link:hover {
+          background: rgba(102, 126, 234, 0.1);
+          color: #667eea;
+          border-radius: 8px;
+          transform: translateX(2px);
+          transition: all 0.3s ease;
+        }
+        
+        .sidebar .nav-item.menu-items:not(.active) > .nav-link:hover .menu-icon i {
+          color: #667eea;
+        }
+        
+        /* Animation for active state transitions */
+        .sidebar .nav-item.menu-items > .nav-link {
+          transition: all 0.3s ease;
+        }
+        
+        /* Active parent indicator for expanded sub-menus */
+        .sidebar .nav-item.menu-items.has-active-child > .nav-link {
+          background: rgba(102, 126, 234, 0.05);
+          border-left: 3px solid #667eea;
+          border-radius: 0 8px 8px 0;
+        }
+        
+        .sidebar .nav-item.menu-items.has-active-child > .nav-link .menu-title {
+          color: #667eea;
+          font-weight: 500;
+        }
+        
+        .sidebar .nav-item.menu-items.has-active-child > .nav-link .menu-icon i {
+          color: #667eea;
+        }
+
         /* Responsive adjustments */
         @media (max-width: 768px) {
           .sidebar .nav-item.profile .profile-name h5 {
@@ -316,4 +390,371 @@
           50% { transform: translateX(calc(-100% + 120px)); }
           100% { transform: translateX(0); }
         }
+        
+        /* Account status indicator styling */
+        .account-status-indicator {
+          display: inline-block;
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          background-color: #dc3545; /* Red for no account */
+          margin-right: 6px;
+          vertical-align: middle;
+        }
+
+        .account-status-indicator.connected {
+          background-color: #28a745; /* Green for connected */
+        }
+
+        .account-status-indicator.loading {
+          background-color: #ffc107; /* Yellow for loading */
+          animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+          0% { opacity: 1; }
+          50% { opacity: 0.5; }
+          100% { opacity: 1; }
+        }
+
+        .profile-name.has-account .account-name {
+          color: #667eea;
+          font-weight: 500;
+        }
+
+        .profile-name.has-account .account-id {
+          opacity: 1;
+          color: #6c7293;
+        }
       </style>
+
+      <script>
+        // Function to set active navigation item based on current URL
+        function setActiveNavigation() {
+          const currentPath = window.location.pathname;
+          const navItems = document.querySelectorAll('.sidebar .nav-item.menu-items');
+          
+          // Remove all existing active states first
+          navItems.forEach(item => {
+            item.classList.remove('active', 'has-active-child');
+            const navLink = item.querySelector('.nav-link');
+            if (navLink) {
+              navLink.classList.remove('active');
+            }
+            
+            // Remove active from sub-menu items
+            const subMenuItems = item.querySelectorAll('.sub-menu .nav-item');
+            subMenuItems.forEach(subItem => {
+              subItem.classList.remove('active');
+              const subLink = subItem.querySelector('.nav-link');
+              if (subLink) {
+                subLink.classList.remove('active');
+              }
+            });
+          });
+          
+          // Special handling for dashboard/root path - check this first
+          if (currentPath === '/' || currentPath === '/dashboard' || currentPath === '' || currentPath === '/index' || currentPath === '/home') {
+            const dashboardItem = document.querySelector('.nav-item.menu-items .nav-link[href="/"]')?.closest('.nav-item');
+            if (dashboardItem) {
+              dashboardItem.classList.add('active');
+              dashboardItem.querySelector('.nav-link').classList.add('active');
+              console.log('Dashboard set as active');
+            }
+            return; // Exit early to prevent other matches
+          }
+          
+          // Set active state based on current path
+          navItems.forEach(item => {
+            const navLink = item.querySelector('.nav-link');
+            const href = navLink?.getAttribute('href');
+            
+            // Skip dashboard link here as it's handled separately above
+            if (href === '/') {
+              return;
+            }
+            
+            // Check for exact match or path starts with href (for sub-paths)
+            if (href && (currentPath === href || (href !== '/' && currentPath.startsWith(href + '/')))) {
+              item.classList.add('active');
+              navLink.classList.add('active');
+              console.log('Main nav item set as active:', href);
+              
+              // If this is a collapsible item, expand it
+              const collapseTarget = navLink.getAttribute('href');
+              if (collapseTarget && collapseTarget.startsWith('#')) {
+                const collapseElement = document.querySelector(collapseTarget);
+                if (collapseElement) {
+                  collapseElement.classList.add('show');
+                  navLink.setAttribute('aria-expanded', 'true');
+                }
+              }
+              return;
+            }
+            
+            // Check sub-menu items for matches
+            const subMenuItems = item.querySelectorAll('.sub-menu .nav-item .nav-link');
+            subMenuItems.forEach(subLink => {
+              const subHref = subLink.getAttribute('href');
+              if (subHref && (currentPath === subHref || currentPath.startsWith(subHref + '/'))) {
+                // Mark parent as having active child
+                item.classList.add('has-active-child');
+                
+                // Mark sub-menu item as active
+                const subMenuItem = subLink.closest('.nav-item');
+                subMenuItem.classList.add('active');
+                subLink.classList.add('active');
+                console.log('Sub-menu item set as active:', subHref);
+                
+                // Expand the parent collapse
+                const parentCollapse = item.querySelector('.collapse');
+                if (parentCollapse) {
+                  parentCollapse.classList.add('show');
+                  const parentNavLink = item.querySelector('.nav-link[data-toggle="collapse"]');
+                  if (parentNavLink) {
+                    parentNavLink.setAttribute('aria-expanded', 'true');
+                  }
+                }
+              }
+            });
+          });
+        }
+        
+        // Initialize active navigation when DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+          console.log('DOM loaded, setting active navigation for:', window.location.pathname);
+          setActiveNavigation();
+        });
+        
+        // Also run immediately in case DOM is already loaded
+        if (document.readyState === 'loading') {
+          // DOM is still loading, wait for DOMContentLoaded
+        } else {
+          // DOM is already loaded
+          console.log('DOM already loaded, setting active navigation for:', window.location.pathname);
+          setActiveNavigation();
+        }
+        
+        // Update active state when browser back/forward buttons are used
+        window.addEventListener('popstate', function() {
+          console.log('Popstate event, updating active navigation');
+          setTimeout(() => {
+            setActiveNavigation();
+          }, 50);
+        });
+        
+        // Optional: Re-run on window focus (in case URL changed in another tab)
+        window.addEventListener('focus', function() {
+          setTimeout(() => {
+            setActiveNavigation();
+          }, 100);
+        });
+
+        // Account Management System
+        class AccountManager {
+          constructor() {
+            this.currentAccount = null;
+            this.accountNameElement = document.getElementById('current-account-name');
+            this.accountIdElement = document.getElementById('current-account-id');
+            this.statusIndicator = document.getElementById('account-status');
+            this.profileNameContainer = this.accountNameElement?.closest('.profile-name');
+          }
+
+          async loadAccount() {
+            this.setLoadingState();
+            
+            try {
+              // Try to load from API first
+              const response = await fetch('/api/current-account');
+              const data = await response.json();
+              
+              if (data.status === 'success' && data.data && data.data.success && data.data.account) {
+                this.setAccount(data.data.account);
+                this.saveToStorage(data.data.account);
+              } else {
+                this.loadFromStorage();
+              }
+            } catch (error) {
+              console.error('Failed to load account from API:', error);
+              this.loadFromStorage();
+            }
+          }
+
+          loadFromStorage() {
+            // First check the new storage key
+            let saved = localStorage.getItem('cfProxyHub_currentAccount');
+            
+            // If not found, check the legacy key from CloudflareAccounts page
+            if (!saved) {
+              saved = localStorage.getItem('selectedAccount');
+            }
+            
+            if (saved) {
+              try {
+                const account = JSON.parse(saved);
+                this.setAccount(account);
+                
+                // If we loaded from legacy key, migrate to new key
+                if (!localStorage.getItem('cfProxyHub_currentAccount')) {
+                  this.saveToStorage(account);
+                }
+              } catch (error) {
+                console.error('Failed to parse saved account:', error);
+                this.setNoAccount();
+              }
+            } else {
+              this.setNoAccount();
+            }
+          }
+
+          saveToStorage(account) {
+            // Save to both storage keys for compatibility
+            localStorage.setItem('cfProxyHub_currentAccount', JSON.stringify(account));
+            localStorage.setItem('selectedAccount', JSON.stringify(account));
+          }
+
+          setAccount(account) {
+            this.currentAccount = account;
+            
+            if (this.accountNameElement) {
+              this.accountNameElement.innerHTML = `
+                <span class="account-status-indicator connected" id="account-status"></span>
+                ${account.name}
+              `;
+              this.accountNameElement.setAttribute('title', `Account: ${account.name}`);
+            }
+            
+            if (this.accountIdElement) {
+              this.accountIdElement.textContent = `ID: ${account.id}`;
+              this.accountIdElement.setAttribute('title', `Account ID: ${account.id}`);
+            }
+            
+            if (this.profileNameContainer) {
+              this.profileNameContainer.classList.add('has-account');
+            }
+            
+            this.updateTooltips();
+          }
+
+          setLoadingState() {
+            if (this.accountNameElement) {
+              this.accountNameElement.innerHTML = `
+                <span class="account-status-indicator loading" id="account-status"></span>
+                Loading...
+              `;
+            }
+          }
+
+          setNoAccount() {
+            if (this.accountNameElement) {
+              this.accountNameElement.innerHTML = `
+                <span class="account-status-indicator" id="account-status"></span>
+                Select Account
+              `;
+              this.accountNameElement.setAttribute('title', 'Select Account');
+            }
+            
+            if (this.accountIdElement) {
+              this.accountIdElement.textContent = 'No account selected';
+              this.accountIdElement.setAttribute('title', 'No account selected');
+            }
+            
+            if (this.profileNameContainer) {
+              this.profileNameContainer.classList.remove('has-account');
+            }
+            
+            this.updateTooltips();
+          }
+
+          updateTooltips() {
+            // Update Bootstrap tooltips if available
+            if (typeof $ !== 'undefined') {
+              $('[data-toggle="tooltip"]').tooltip('dispose').tooltip();
+            }
+          }
+
+          // Method to be called when account is changed
+          switchAccount(account) {
+            this.setAccount(account);
+            this.saveToStorage(account);
+            
+            // Optionally reload the page or update other components
+            // window.location.reload();
+          }
+
+          // Method to clear current account
+          clearAccount() {
+            localStorage.removeItem('cfProxyHub_currentAccount');
+            localStorage.removeItem('selectedAccount');
+            this.setNoAccount();
+          }
+
+          // Get current account info
+          getCurrentAccount() {
+            return this.currentAccount;
+          }
+
+          // Method to sync account to server
+          async syncToServer(account) {
+            try {
+              const response = await fetch('/api/current-account', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify(account)
+              });
+              
+              if (!response.ok) {
+                console.warn('Failed to sync account to server:', response.statusText);
+                return;
+              }
+              
+              const data = await response.json();
+              if (data.status === 'success' && data.data && data.data.success) {
+                console.log('Account synced to server successfully:', data.data.message);
+              } else {
+                console.warn('Server sync response:', data);
+              }
+            } catch (error) {
+              console.warn('Server sync failed (non-critical):', error);
+            }
+          }
+
+          // Enhanced switch account method with server sync
+          async switchAccountWithSync(account) {
+            this.setAccount(account);
+            this.saveToStorage(account);
+            await this.syncToServer(account);
+          }
+        }
+
+        // Initialize account manager
+        const accountManager = new AccountManager();
+
+        // Load account when DOM is ready
+        document.addEventListener('DOMContentLoaded', () => {
+          accountManager.loadAccount();
+        });
+
+        // Listen for storage changes from other tabs/pages
+        window.addEventListener('storage', (e) => {
+          if (e.key === 'selectedAccount' || e.key === 'cfProxyHub_currentAccount') {
+            accountManager.loadFromStorage();
+          }
+        });
+
+        // Listen for custom account selection events (from CloudflareAccounts page)
+        window.addEventListener('accountSelected', (e) => {
+          if (e.detail && e.detail.id && e.detail.name) {
+            accountManager.switchAccount({
+              id: e.detail.id,
+              name: e.detail.name
+            });
+          }
+        });
+
+        // Make it globally available for other scripts
+        window.accountManager = accountManager;
+      </script>

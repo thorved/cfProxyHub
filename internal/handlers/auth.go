@@ -1,12 +1,10 @@
 package handlers
 
 import (
+	"cfPorxyHub/internal/config"
+	"github.com/gin-gonic/gin"
 	"net/http"
 	"time"
-
-	"cfPorxyHub/internal/config"
-
-	"github.com/gin-gonic/gin"
 )
 
 // LoginHandler handles user login
@@ -101,4 +99,74 @@ func (h *LoginHandler) generateSessionToken(username string) string {
 
 	// For demo purposes, create a simple token with timestamp
 	return username + "_" + time.Now().Format("20060102150405")
+}
+
+// LoginAPI handles API login requests and returns JSON responses
+func (h *LoginHandler) LoginAPI(c *gin.Context) {
+	var loginRequest struct {
+		Username string `json:"username" binding:"required"`
+		Password string `json:"password" binding:"required"`
+	}
+
+	// Bind JSON request
+	if err := c.ShouldBindJSON(&loginRequest); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   "Invalid request",
+			"message": "Username and password are required",
+		})
+		return
+	}
+
+	// Authenticate user
+	if h.authenticateUser(loginRequest.Username, loginRequest.Password) {
+		// Create session token
+		sessionToken := h.generateSessionToken(loginRequest.Username)
+
+		// Set session cookie
+		c.SetCookie(
+			"session_token", // name
+			sessionToken,    // value
+			3600*24*7,       // maxAge (7 days)
+			"/",             // path
+			"",              // domain
+			false,           // secure (set to true in production with HTTPS)
+			true,            // httpOnly
+		)
+
+		// Return success response
+		c.JSON(http.StatusOK, gin.H{
+			"success": true,
+			"message": "Login successful",
+			"user": gin.H{
+				"username": loginRequest.Username,
+			},
+		})
+		return
+	}
+
+	// Authentication failed
+	c.JSON(http.StatusUnauthorized, gin.H{
+		"error":   "Authentication failed",
+		"message": "Invalid username or password",
+	})
+}
+
+// LogoutAPI handles API logout requests and returns JSON responses
+func (h *LoginHandler) LogoutAPI(c *gin.Context) {
+	// Clear the session cookie
+	c.SetCookie(
+		"session_token",
+		"",
+		-1, // maxAge negative to delete
+		"/",
+		"",
+		false,
+		true,
+	)
+
+	// Return success response
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "Logout successful",
+	})
 }

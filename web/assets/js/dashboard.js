@@ -61,18 +61,18 @@
         }
       });
     }
-    if ($("#transaction-history").length) {
-      var areaData = {
-        labels: ["Paypal", "Stripe","Cash"],
+    if ($("#tunnel-status-chart").length) {
+      var tunnelData = {
+        labels: ["Active", "Inactive", "Error"],
         datasets: [{
-            data: [55, 25, 20],
+            data: [8, 3, 0],
             backgroundColor: [
-              "#111111","#00d25b","#ffab00"
+              "#00d25b","#ffab00","#f44252"
             ]
           }
         ]
       };
-      var areaOptions = {
+      var tunnelOptions = {
         responsive: true,
         maintainAspectRatio: true,
         segmentShowStroke: false,
@@ -86,10 +86,17 @@
           display: false
         },
         tooltips: {
-          enabled: true
+          enabled: true,
+          callbacks: {
+            label: function(tooltipItem, data) {
+              var label = data.labels[tooltipItem.index];
+              var value = data.datasets[0].data[tooltipItem.index];
+              return label + ': ' + value + ' tunnels';
+            }
+          }
         }
       }
-      var transactionhistoryChartPlugins = {
+      var tunnelChartPlugins = {
         beforeDraw: function(chart) {
           var width = chart.chart.width,
               height = chart.chart.height,
@@ -102,7 +109,7 @@
           ctx.textBaseline = "middle";
           ctx.fillStyle = "#ffffff";
       
-          var text = "$1200", 
+          var text = "11", 
               textX = Math.round((width - ctx.measureText(text).width) / 2),
               textY = height / 2.4;
       
@@ -123,12 +130,12 @@
           ctx.save();
         }
       }
-      var transactionhistoryChartCanvas = $("#transaction-history").get(0).getContext("2d");
-      var transactionhistoryChart = new Chart(transactionhistoryChartCanvas, {
+      var tunnelChartCanvas = $("#tunnel-status-chart").get(0).getContext("2d");
+      var tunnelChart = new Chart(tunnelChartCanvas, {
         type: 'doughnut',
-        data: areaData,
-        options: areaOptions,
-        plugins: transactionhistoryChartPlugins
+        data: tunnelData,
+        options: tunnelOptions,
+        plugins: tunnelChartPlugins
       });
     }
     if ($("#transaction-history-arabic").length) {

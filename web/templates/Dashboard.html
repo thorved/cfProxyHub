@@ -7,7 +7,7 @@
       name="viewport"
       content="width=device-width, initial-scale=1, shrink-to-fit=no"
     />
-    <title>Corona Admin</title>
+    <title>CF Proxy Hub - Dashboard</title>
    <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.6/dist/htmx.min.js" integrity="sha384-Akqfrbj/HpNVo8k11SXBb6TlBWmXXlYQrCSqEWmyKJe+hDm3Z/B2WVG4smwBkRVm" crossorigin="anonymous"></script>
     <!-- plugins:css -->
     <link
@@ -40,15 +40,77 @@
     <link rel="stylesheet" href="assets/css/style.css" />
     <!-- End layout styles -->
     <link rel="shortcut icon" href="assets/images/favicon.png" />
+    <style>
+      /* Custom icon colors for dashboard */
+      .icon-box-info {
+        background: linear-gradient(45deg, #007bff, #17a2b8);
+        color: white;
+      }
+      
+      .icon-box-warning {
+        background: linear-gradient(45deg, #ffc107, #fd7e14);
+        color: white;
+      }
+      
+      /* Real-time status indicators */
+      .status-indicator {
+        position: relative;
+        display: inline-block;
+      }
+      
+      .status-indicator::after {
+        content: '';
+        position: absolute;
+        top: -2px;
+        right: -2px;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        animation: pulse 2s infinite;
+      }
+      
+      .status-active::after {
+        background-color: #28a745;
+      }
+      
+      .status-inactive::after {
+        background-color: #ffc107;
+      }
+      
+      @keyframes pulse {
+        0% { transform: scale(0.95); opacity: 1; }
+        70% { transform: scale(1); opacity: 0.7; }
+        100% { transform: scale(0.95); opacity: 1; }
+      }
+      
+      /* Dashboard cards hover effect */
+      .card {
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+      }
+      
+      .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+      }
+      
+      /* Activity timeline styling */
+      .preview-item {
+        transition: background-color 0.2s ease;
+      }
+      
+      .preview-item:hover {
+        background-color: rgba(0,0,0,0.02);
+      }
+    </style>
   </head>
   <body>
     <div class="container-scroller">
       <!-- partial:partials/_sidebar.html -->
-      <div hx-get="/components/sidebar" hx-trigger="load once"></div>
+      {{template "sidebar.html" .}}
       <!-- partial -->
       <div class="container-fluid page-body-wrapper">
         <!-- partial:partials/_navbar.html -->
-        <div hx-get="/components/header" hx-trigger="load once"></div>
+        {{template "header.html" .}}
         <!-- partial -->
         <div class="main-panel">
           <div class="content-wrapper">
@@ -59,22 +121,22 @@
                     <div class="row">
                       <div class="col-9">
                         <div class="d-flex align-items-center align-self-start">
-                          <h3 class="mb-0">$12.34</h3>
+                          <h3 class="mb-0" id="total-accounts">3</h3>
                           <p class="text-success ml-2 mb-0 font-weight-medium">
-                            +3.5%
+                            +1 this month
                           </p>
                         </div>
                       </div>
                       <div class="col-3">
                         <div class="icon icon-box-success">
                           <span
-                            class="mdi mdi-arrow-top-right icon-item"
+                            class="mdi mdi-account-multiple icon-item"
                           ></span>
                         </div>
                       </div>
                     </div>
                     <h6 class="text-muted font-weight-normal">
-                      Potential growth
+                      Total Accounts
                     </h6>
                   </div>
                 </div>
@@ -85,22 +147,22 @@
                     <div class="row">
                       <div class="col-9">
                         <div class="d-flex align-items-center align-self-start">
-                          <h3 class="mb-0">$17.34</h3>
-                          <p class="text-success ml-2 mb-0 font-weight-medium">
-                            +11%
+                          <h3 class="mb-0" id="total-domains">24</h3>
+                          <p class="text-info ml-2 mb-0 font-weight-medium">
+                            All Active
                           </p>
                         </div>
                       </div>
                       <div class="col-3">
-                        <div class="icon icon-box-success">
+                        <div class="icon icon-box-info">
                           <span
-                            class="mdi mdi-arrow-top-right icon-item"
+                            class="mdi mdi-web icon-item"
                           ></span>
                         </div>
                       </div>
                     </div>
                     <h6 class="text-muted font-weight-normal">
-                      Revenue current
+                      Total Domains
                     </h6>
                   </div>
                 </div>
@@ -111,21 +173,21 @@
                     <div class="row">
                       <div class="col-9">
                         <div class="d-flex align-items-center align-self-start">
-                          <h3 class="mb-0">$12.34</h3>
-                          <p class="text-danger ml-2 mb-0 font-weight-medium">
-                            -2.4%
+                          <h3 class="mb-0" id="active-tunnels">8</h3>
+                          <p class="text-success ml-2 mb-0 font-weight-medium">
+                            Running
                           </p>
                         </div>
                       </div>
                       <div class="col-3">
-                        <div class="icon icon-box-danger">
+                        <div class="icon icon-box-success">
                           <span
-                            class="mdi mdi-arrow-bottom-left icon-item"
+                            class="mdi mdi-pipe icon-item"
                           ></span>
                         </div>
                       </div>
                     </div>
-                    <h6 class="text-muted font-weight-normal">Daily Income</h6>
+                    <h6 class="text-muted font-weight-normal">Active Tunnels</h6>
                   </div>
                 </div>
               </div>
@@ -135,22 +197,22 @@
                     <div class="row">
                       <div class="col-9">
                         <div class="d-flex align-items-center align-self-start">
-                          <h3 class="mb-0">$31.53</h3>
-                          <p class="text-success ml-2 mb-0 font-weight-medium">
-                            +3.5%
+                          <h3 class="mb-0" id="inactive-tunnels">3</h3>
+                          <p class="text-warning ml-2 mb-0 font-weight-medium">
+                            Inactive
                           </p>
                         </div>
                       </div>
                       <div class="col-3">
-                        <div class="icon icon-box-success">
+                        <div class="icon icon-box-warning">
                           <span
-                            class="mdi mdi-arrow-top-right icon-item"
+                            class="mdi mdi-pipe-disconnected icon-item"
                           ></span>
                         </div>
                       </div>
                     </div>
                     <h6 class="text-muted font-weight-normal">
-                      Expense current
+                      Inactive Tunnels
                     </h6>
                   </div>
                 </div>
@@ -160,35 +222,35 @@
               <div class="col-md-4 grid-margin stretch-card">
                 <div class="card">
                   <div class="card-body">
-                    <h4 class="card-title">Transaction History</h4>
+                    <h4 class="card-title">Tunnel Status</h4>
                     <canvas
-                      id="transaction-history"
+                      id="tunnel-status-chart"
                       class="transaction-chart"
                     ></canvas>
                     <div
                       class="bg-gray-dark d-flex d-md-block d-xl-flex flex-row py-3 px-4 px-md-3 px-xl-4 rounded mt-3"
                     >
                       <div class="text-md-center text-xl-left">
-                        <h6 class="mb-1">Transfer to Paypal</h6>
-                        <p class="text-muted mb-0">07 Jan 2019, 09:12AM</p>
+                        <h6 class="mb-1">Active Tunnels</h6>
+                        <p class="text-muted mb-0">Currently Running</p>
                       </div>
                       <div
                         class="align-self-center flex-grow text-right text-md-center text-xl-right py-md-2 py-xl-0"
                       >
-                        <h6 class="font-weight-bold mb-0">$236</h6>
+                        <h6 class="font-weight-bold mb-0 text-success">8</h6>
                       </div>
                     </div>
                     <div
                       class="bg-gray-dark d-flex d-md-block d-xl-flex flex-row py-3 px-4 px-md-3 px-xl-4 rounded mt-3"
                     >
                       <div class="text-md-center text-xl-left">
-                        <h6 class="mb-1">Tranfer to Stripe</h6>
-                        <p class="text-muted mb-0">07 Jan 2019, 09:12AM</p>
+                        <h6 class="mb-1">Inactive Tunnels</h6>
+                        <p class="text-muted mb-0">Not Connected</p>
                       </div>
                       <div
                         class="align-self-center flex-grow text-right text-md-center text-xl-right py-md-2 py-xl-0"
                       >
-                        <h6 class="font-weight-bold mb-0">$593</h6>
+                        <h6 class="font-weight-bold mb-0 text-warning">3</h6>
                       </div>
                     </div>
                   </div>
@@ -198,41 +260,16 @@
                 <div class="card">
                   <div class="card-body">
                     <div class="d-flex flex-row justify-content-between">
-                      <h4 class="card-title mb-1">Open Projects</h4>
-                      <p class="text-muted mb-1">Your data status</p>
+                      <h4 class="card-title mb-1">Recent Activities</h4>
+                      <p class="text-muted mb-1">Last 24 hours</p>
                     </div>
                     <div class="row">
                       <div class="col-12">
                         <div class="preview-list">
                           <div class="preview-item border-bottom">
                             <div class="preview-thumbnail">
-                              <div class="preview-icon bg-primary">
-                                <i class="mdi mdi-file-document"></i>
-                              </div>
-                            </div>
-                            <div
-                              class="preview-item-content d-sm-flex flex-grow"
-                            >
-                              <div class="flex-grow">
-                                <h6 class="preview-subject">
-                                  Admin dashboard design
-                                </h6>
-                                <p class="text-muted mb-0">
-                                  Broadcast web app mockup
-                                </p>
-                              </div>
-                              <div class="mr-auto text-sm-right pt-2 pt-sm-0">
-                                <p class="text-muted">15 minutes ago</p>
-                                <p class="text-muted mb-0">
-                                  30 tasks, 5 issues
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                          <div class="preview-item border-bottom">
-                            <div class="preview-thumbnail">
                               <div class="preview-icon bg-success">
-                                <i class="mdi mdi-cloud-download"></i>
+                                <i class="mdi mdi-pipe"></i>
                               </div>
                             </div>
                             <div
@@ -240,14 +277,16 @@
                             >
                               <div class="flex-grow">
                                 <h6 class="preview-subject">
-                                  Wordpress Development
+                                  New tunnel created
                                 </h6>
-                                <p class="text-muted mb-0">Upload new design</p>
+                                <p class="text-muted mb-0">
+                                  api-tunnel.example.com
+                                </p>
                               </div>
                               <div class="mr-auto text-sm-right pt-2 pt-sm-0">
-                                <p class="text-muted">1 hour ago</p>
+                                <p class="text-muted">2 hours ago</p>
                                 <p class="text-muted mb-0">
-                                  23 tasks, 5 issues
+                                  Status: Active
                                 </p>
                               </div>
                             </div>
@@ -255,68 +294,91 @@
                           <div class="preview-item border-bottom">
                             <div class="preview-thumbnail">
                               <div class="preview-icon bg-info">
-                                <i class="mdi mdi-clock"></i>
+                                <i class="mdi mdi-dns"></i>
                               </div>
                             </div>
                             <div
                               class="preview-item-content d-sm-flex flex-grow"
                             >
                               <div class="flex-grow">
-                                <h6 class="preview-subject">Project meeting</h6>
-                                <p class="text-muted mb-0">
-                                  New project discussion
-                                </p>
+                                <h6 class="preview-subject">
+                                  DNS record updated
+                                </h6>
+                                <p class="text-muted mb-0">A record for subdomain.example.com</p>
                               </div>
                               <div class="mr-auto text-sm-right pt-2 pt-sm-0">
-                                <p class="text-muted">35 minutes ago</p>
+                                <p class="text-muted">4 hours ago</p>
                                 <p class="text-muted mb-0">
-                                  15 tasks, 2 issues
+                                  Type: A Record
                                 </p>
                               </div>
                             </div>
                           </div>
                           <div class="preview-item border-bottom">
                             <div class="preview-thumbnail">
-                              <div class="preview-icon bg-danger">
-                                <i class="mdi mdi-email-open"></i>
+                              <div class="preview-icon bg-primary">
+                                <i class="mdi mdi-account-multiple"></i>
                               </div>
                             </div>
                             <div
                               class="preview-item-content d-sm-flex flex-grow"
                             >
                               <div class="flex-grow">
-                                <h6 class="preview-subject">Broadcast Mail</h6>
+                                <h6 class="preview-subject">Account switched</h6>
                                 <p class="text-muted mb-0">
-                                  Sent release details to team
+                                  Changed to Production Account
                                 </p>
                               </div>
                               <div class="mr-auto text-sm-right pt-2 pt-sm-0">
-                                <p class="text-muted">55 minutes ago</p>
+                                <p class="text-muted">6 hours ago</p>
                                 <p class="text-muted mb-0">
-                                  35 tasks, 7 issues
+                                  Account: prod-cf-account
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="preview-item border-bottom">
+                            <div class="preview-thumbnail">
+                              <div class="preview-icon bg-warning">
+                                <i class="mdi mdi-alert-circle"></i>
+                              </div>
+                            </div>
+                            <div
+                              class="preview-item-content d-sm-flex flex-grow"
+                            >
+                              <div class="flex-grow">
+                                <h6 class="preview-subject">Tunnel disconnected</h6>
+                                <p class="text-muted mb-0">
+                                  staging-api.example.com went offline
+                                </p>
+                              </div>
+                              <div class="mr-auto text-sm-right pt-2 pt-sm-0">
+                                <p class="text-muted">8 hours ago</p>
+                                <p class="text-muted mb-0">
+                                  Status: Offline
                                 </p>
                               </div>
                             </div>
                           </div>
                           <div class="preview-item">
                             <div class="preview-thumbnail">
-                              <div class="preview-icon bg-warning">
-                                <i class="mdi mdi-chart-pie"></i>
+                              <div class="preview-icon bg-success">
+                                <i class="mdi mdi-web"></i>
                               </div>
                             </div>
                             <div
                               class="preview-item-content d-sm-flex flex-grow"
                             >
                               <div class="flex-grow">
-                                <h6 class="preview-subject">UI Design</h6>
+                                <h6 class="preview-subject">Domain verified</h6>
                                 <p class="text-muted mb-0">
-                                  New application planning
+                                  newdomain.com SSL certificate activated
                                 </p>
                               </div>
                               <div class="mr-auto text-sm-right pt-2 pt-sm-0">
-                                <p class="text-muted">50 minutes ago</p>
+                                <p class="text-muted">12 hours ago</p>
                                 <p class="text-muted mb-0">
-                                  27 tasks, 4 issues
+                                  SSL: Active
                                 </p>
                               </div>
                             </div>
@@ -332,26 +394,26 @@
               <div class="col-sm-4 grid-margin">
                 <div class="card">
                   <div class="card-body">
-                    <h5>Revenue</h5>
+                    <h5>DNS Records</h5>
                     <div class="row">
                       <div class="col-8 col-sm-12 col-xl-8 my-auto">
                         <div
                           class="d-flex d-sm-block d-md-flex align-items-center"
                         >
-                          <h2 class="mb-0">$32123</h2>
+                          <h2 class="mb-0">127</h2>
                           <p class="text-success ml-2 mb-0 font-weight-medium">
-                            +3.5%
+                            +12 today
                           </p>
                         </div>
                         <h6 class="text-muted font-weight-normal">
-                          11.38% Since last month
+                          Total DNS records managed
                         </h6>
                       </div>
                       <div
                         class="col-4 col-sm-12 col-xl-4 text-center text-xl-right"
                       >
                         <i
-                          class="icon-lg mdi mdi-codepen text-primary ml-auto"
+                          class="icon-lg mdi mdi-dns text-primary ml-auto"
                         ></i>
                       </div>
                     </div>
@@ -361,26 +423,26 @@
               <div class="col-sm-4 grid-margin">
                 <div class="card">
                   <div class="card-body">
-                    <h5>Sales</h5>
+                    <h5>SSL Certificates</h5>
                     <div class="row">
                       <div class="col-8 col-sm-12 col-xl-8 my-auto">
                         <div
                           class="d-flex d-sm-block d-md-flex align-items-center"
                         >
-                          <h2 class="mb-0">$45850</h2>
+                          <h2 class="mb-0">21</h2>
                           <p class="text-success ml-2 mb-0 font-weight-medium">
-                            +8.3%
+                            All Valid
                           </p>
                         </div>
                         <h6 class="text-muted font-weight-normal">
-                          9.61% Since last month
+                          Active SSL certificates
                         </h6>
                       </div>
                       <div
                         class="col-4 col-sm-12 col-xl-4 text-center text-xl-right"
                       >
                         <i
-                          class="icon-lg mdi mdi-wallet-travel text-danger ml-auto"
+                          class="icon-lg mdi mdi-shield-check text-success ml-auto"
                         ></i>
                       </div>
                     </div>
@@ -390,26 +452,26 @@
               <div class="col-sm-4 grid-margin">
                 <div class="card">
                   <div class="card-body">
-                    <h5>Purchase</h5>
+                    <h5>Bandwidth</h5>
                     <div class="row">
                       <div class="col-8 col-sm-12 col-xl-8 my-auto">
                         <div
                           class="d-flex d-sm-block d-md-flex align-items-center"
                         >
-                          <h2 class="mb-0">$2039</h2>
-                          <p class="text-danger ml-2 mb-0 font-weight-medium">
-                            -2.1%
+                          <h2 class="mb-0">2.4TB</h2>
+                          <p class="text-info ml-2 mb-0 font-weight-medium">
+                            This month
                           </p>
                         </div>
                         <h6 class="text-muted font-weight-normal">
-                          2.27% Since last month
+                          Total data transferred
                         </h6>
                       </div>
                       <div
                         class="col-4 col-sm-12 col-xl-4 text-center text-xl-right"
                       >
                         <i
-                          class="icon-lg mdi mdi-monitor text-success ml-auto"
+                          class="icon-lg mdi mdi-speedometer text-info ml-auto"
                         ></i>
                       </div>
                     </div>
@@ -423,7 +485,7 @@
           </div>
           <!-- content-wrapper ends -->
           <!-- partial:partials/_footer.html -->
-          <div hx-get="/components/footer" hx-trigger="load once"></div>
+          {{template "footer.html" .}}
           <!-- partial -->
         </div>
         <!-- main-panel ends -->
@@ -452,5 +514,57 @@
     <script src="assets/js/dashboard.js"></script>
     <script src="assets/js/sidebar-account.js"></script>
     <!-- End custom js for this page -->
+    <script>
+      // Dashboard real-time updates
+      document.addEventListener('DOMContentLoaded', function() {
+        // Add status indicators to tunnel counts
+        function addStatusIndicators() {
+          const activeTunnels = document.querySelector('#active-tunnels');
+          const inactiveTunnels = document.querySelector('#inactive-tunnels');
+          
+          if (activeTunnels) {
+            activeTunnels.classList.add('status-indicator', 'status-active');
+          }
+          
+          if (inactiveTunnels) {
+            inactiveTunnels.classList.add('status-indicator', 'status-inactive');
+          }
+        }
+        
+        // Simulate real-time data updates (in a real app, this would come from WebSocket or API)
+        function updateDashboardStats() {
+          // Simulate some variation in tunnel counts
+          const activeTunnels = Math.floor(Math.random() * 3) + 7; // 7-9
+          const inactiveTunnels = Math.floor(Math.random() * 2) + 2; // 2-3
+          const totalDomains = Math.floor(Math.random() * 5) + 22; // 22-26
+          
+          // Update the display
+          document.getElementById('active-tunnels').textContent = activeTunnels;
+          document.getElementById('inactive-tunnels').textContent = inactiveTunnels;
+          document.getElementById('total-domains').textContent = totalDomains;
+        }
+        
+        // Initialize status indicators
+        addStatusIndicators();
+        
+        // Update stats every 30 seconds (optional - remove for static dashboard)
+        // setInterval(updateDashboardStats, 30000);
+        
+        // Add click handlers for quick actions
+        document.querySelectorAll('.card').forEach(card => {
+          card.addEventListener('click', function() {
+            const title = this.querySelector('h6').textContent.toLowerCase();
+            
+            if (title.includes('accounts')) {
+              window.location.href = '/CloudflareAccounts';
+            } else if (title.includes('tunnels')) {
+              window.location.href = '/tunnels';
+            } else if (title.includes('domains')) {
+              window.location.href = '/domains';
+            }
+          });
+        });
+      });
+    </script>
   </body>
 </html>

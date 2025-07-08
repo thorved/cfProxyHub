@@ -21,8 +21,14 @@ func SetupCloudflareRoutes(router *gin.Engine) {
 		log.Fatalf("Failed to initialize Cloudflare service: %v", err)
 	}
 
+	// Initialize Cloudflare tunnel service
+	tunnelService, err := services.NewCloudflareTunnelService(cfg.CloudflareAPIToken, cfg.CloudflareAPIKey, cfg.CloudflareEmail)
+	if err != nil {
+		log.Fatalf("Failed to initialize Cloudflare tunnel service: %v", err)
+	}
+
 	// Initialize handlers
-	cfHandler := handlers.NewCloudflareHandler(cfService)
+	cfHandler := handlers.NewCloudflareHandler(cfService, tunnelService)
 
 	// Cloudflare API routes
 	cloudflare := router.Group("/api/cloudflare")
@@ -31,7 +37,9 @@ func SetupCloudflareRoutes(router *gin.Engine) {
 	cloudflare.Use(middleware.RequireAuth())
 
 	{
-		cloudflare.GET("/accounts/json", cfHandler.GetAccounts) // JSON API for direct API access
+		cloudflare.GET("/accounts", cfHandler.GetAccounts) // JSON API for direct API access
 		cloudflare.GET("/accounts/:id", cfHandler.GetAccountByID)
+		cloudflare.GET("/accounts/:id/tunnels", cfHandler.GetTunnelsByAccountID)    // Get tunnels for specific account
+		cloudflare.GET("/accounts/:id/tunnels/:tunnel_id", cfHandler.GetTunnelByID) // Get specific tunnel by ID
 	}
 }
