@@ -37,7 +37,10 @@ func SetupCloudflareRoutes(router *gin.Engine, cfg *config.Config) {
 
 		// Zone routes
 		cloudflare.GET("/accounts/:accountId/zones", zoneHandler.GetZonesByAccountID)               // Get zones for specific account
+		cloudflare.POST("/accounts/:accountId/zones", zoneHandler.CreateZone)                       // Create new zone
 		cloudflare.GET("/zones/:zoneId", zoneHandler.GetZoneByID)                                   // Get specific zone by ID
+		cloudflare.PUT("/zones/:zoneId", zoneHandler.UpdateZone)                                    // Update existing zone
+		cloudflare.DELETE("/zones/:zoneId", zoneHandler.DeleteZone)                                 // Delete zone
 		cloudflare.GET("/accounts/:accountId/zones/by-name/:domainName", zoneHandler.GetZoneByName) // Get zone by domain name
 		cloudflare.GET("/accounts/:accountId/zones/dropdown", zoneHandler.GetZonesForDropdown)      // Get zones for dropdown usage
 

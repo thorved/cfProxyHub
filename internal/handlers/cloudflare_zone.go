@@ -192,3 +192,96 @@ func (h *CloudflareZoneHandler) GetZonesForDropdown(c *gin.Context) {
 		"total":   len(summaries),
 	})
 }
+
+// CreateZone handles POST /api/cloudflare/accounts/{accountId}/zones
+func (h *CloudflareZoneHandler) CreateZone(c *gin.Context) {
+	accountID := c.Param("accountId")
+	if accountID == "" {
+		utils.ErrorResponse(c, "Account ID is required", http.StatusBadRequest)
+		return
+	}
+
+	var req models.ZoneCreateRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.ErrorResponse(c, "Invalid request body: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Ensure account ID matches
+	if req.AccountID != accountID {
+		utils.ErrorResponse(c, "Account ID in URL must match account ID in request body", http.StatusBadRequest)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	zone, err := h.cfService.CreateZone(ctx, accountID, req.Name)
+	if err != nil {
+		utils.ErrorResponse(c, "Failed to create zone: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	response := models.ZoneResponse{
+		Success: true,
+		Message: "Zone created successfully",
+		Data:    *zone,
+	}
+	utils.SuccessResponse(c, response)
+}
+
+// UpdateZone handles PUT /api/cloudflare/zones/{zoneId}
+func (h *CloudflareZoneHandler) UpdateZone(c *gin.Context) {
+	zoneID := c.Param("zoneId")
+	if zoneID == "" {
+		utils.ErrorResponse(c, "Zone ID is required", http.StatusBadRequest)
+		return
+	}
+
+	var req models.ZoneUpdateRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.ErrorResponse(c, "Invalid request body: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	zone, err := h.cfService.UpdateZone(ctx, zoneID, req.Paused)
+	if err != nil {
+		utils.ErrorResponse(c, "Failed to update zone: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	response := models.ZoneResponse{
+		Success: true,
+		Message: "Zone updated successfully",
+		Data:    *zone,
+	}
+	utils.SuccessResponse(c, response)
+}
+
+// DeleteZone handles DELETE /api/cloudflare/zones/{zoneId}
+func (h *CloudflareZoneHandler) DeleteZone(c *gin.Context) {
+	zoneID := c.Param("zoneId")
+	if zoneID == "" {
+		utils.ErrorResponse(c, "Zone ID is required", http.StatusBadRequest)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	err := h.cfService.DeleteZone(ctx, zoneID)
+	if err != nil {
+		utils.ErrorResponse(c, "Failed to delete zone: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	response := models.ZoneDeleteResponse{
+		Success: true,
+		Message: "Zone deleted successfully",
+		ID:      zoneID,
+	}
+	utils.SuccessResponse(c, response)
+}

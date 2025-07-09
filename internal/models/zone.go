@@ -76,6 +76,23 @@ type ZoneSummaryResponse struct {
 	Total   int           `json:"total"`
 }
 
+// Zone create/update request models
+type ZoneCreateRequest struct {
+	Name      string `json:"name" binding:"required"`
+	AccountID string `json:"account_id" binding:"required"`
+}
+
+type ZoneUpdateRequest struct {
+	Paused bool `json:"paused"`
+}
+
+// Zone delete response
+type ZoneDeleteResponse struct {
+	Success bool   `json:"success"`
+	Message string `json:"message"`
+	ID      string `json:"id"`
+}
+
 // Helper functions for creating zone summaries
 func NewZoneSummary(zone Zone) ZoneSummary {
 	return ZoneSummary{

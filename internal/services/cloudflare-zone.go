@@ -379,6 +379,106 @@ func (s *CloudflareService) DeleteDNSRecord(ctx context.Context, zoneID, recordI
 	return nil
 }
 
+// CreateZone creates a new zone for the specified account
+func (s *CloudflareService) CreateZone(ctx context.Context, accountID, domainName string) (*models.Zone, error) {
+	if accountID == "" {
+		return nil, fmt.Errorf("account ID is required")
+	}
+	if domainName == "" {
+		return nil, fmt.Errorf("domain name is required")
+	}
+
+	log.Printf("Creating zone: %s for account: %s", domainName, accountID)
+
+	params := zones.ZoneNewParams{
+		Account: cloudflare.F(zones.ZoneNewParamsAccount{
+			ID: cloudflare.F(accountID),
+		}),
+		Name: cloudflare.F(domainName),
+	}
+
+	zone, err := s.client.Zones.New(ctx, params)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create zone: %w", err)
+	}
+
+	result := models.Zone{
+		ID:                  zone.ID,
+		Name:                zone.Name,
+		Status:              string(zone.Status),
+		Type:                string(zone.Type),
+		DevelopmentMode:     int(zone.DevelopmentMode),
+		NameServers:         zone.NameServers,
+		OriginalNameServers: zone.OriginalNameServers,
+		OriginalRegistrar:   zone.OriginalRegistrar,
+		OriginalDNSHost:     zone.OriginalDnshost,
+		ModifiedOn:          zone.ModifiedOn,
+		CreatedOn:           zone.CreatedOn,
+		ActivatedOn:         zone.ActivatedOn,
+	}
+
+	log.Printf("Successfully created zone: %s (%s)", zone.Name, zone.ID)
+	return &result, nil
+}
+
+// UpdateZone updates an existing zone (limited to pausing/unpausing)
+func (s *CloudflareService) UpdateZone(ctx context.Context, zoneID string, paused bool) (*models.Zone, error) {
+	if zoneID == "" {
+		return nil, fmt.Errorf("zone ID is required")
+	}
+
+	log.Printf("Updating zone: %s (paused: %t)", zoneID, paused)
+
+	params := zones.ZoneEditParams{
+		ZoneID: cloudflare.F(zoneID),
+		Paused: cloudflare.F(paused),
+	}
+
+	zone, err := s.client.Zones.Edit(ctx, params)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update zone: %w", err)
+	}
+
+	result := models.Zone{
+		ID:                  zone.ID,
+		Name:                zone.Name,
+		Status:              string(zone.Status),
+		Type:                string(zone.Type),
+		DevelopmentMode:     int(zone.DevelopmentMode),
+		NameServers:         zone.NameServers,
+		OriginalNameServers: zone.OriginalNameServers,
+		OriginalRegistrar:   zone.OriginalRegistrar,
+		OriginalDNSHost:     zone.OriginalDnshost,
+		ModifiedOn:          zone.ModifiedOn,
+		CreatedOn:           zone.CreatedOn,
+		ActivatedOn:         zone.ActivatedOn,
+	}
+
+	log.Printf("Successfully updated zone: %s (%s)", zone.Name, zone.ID)
+	return &result, nil
+}
+
+// DeleteZone deletes a zone
+func (s *CloudflareService) DeleteZone(ctx context.Context, zoneID string) error {
+	if zoneID == "" {
+		return fmt.Errorf("zone ID is required")
+	}
+
+	log.Printf("Deleting zone: %s", zoneID)
+
+	params := zones.ZoneDeleteParams{
+		ZoneID: cloudflare.F(zoneID),
+	}
+
+	_, err := s.client.Zones.Delete(ctx, params)
+	if err != nil {
+		return fmt.Errorf("failed to delete zone: %w", err)
+	}
+
+	log.Printf("Successfully deleted zone: %s", zoneID)
+	return nil
+}
+
 // Helper function to extract domain from hostname
 func extractDomain(hostname string) string {
 	parts := strings.Split(hostname, ".")
