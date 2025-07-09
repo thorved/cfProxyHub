@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  cfproxyhub:
+    build: .
+    container_name: cfproxyhub
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    volumes:
+      # Persistent data storage
+      - cfproxy_data:/app/data
+      
+      # Cloudflared configuration and credentials
+      - cloudflared_config:/etc/cloudflared
+      - cloudflared_data:/root/.cloudflared
+      
+      # Optional: Mount custom cloudflared config
+      # - ./cloudflared/config.yml:/etc/cloudflared/config.yml:ro
+      
+    networks:
+      - cfproxy_network
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+
+volumes:
+  cfproxy_data:
+    driver: local
+  cloudflared_config:
+    driver: local
+  cloudflared_data:
+    driver: local
+
+networks:
+  cfproxy_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
