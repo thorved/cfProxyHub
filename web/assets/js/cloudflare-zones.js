@@ -340,7 +340,7 @@ class CloudflareZonesManager {
         return `
             <tr>
                 <td>
-                    <a href="/CloudflareZoneDetails?id=${zone.id}" class="zone-name">
+                    <a href="/cloudflare/zones/details?id=${zone.id}" class="zone-name">
                         ${zone.name}
                     </a>
                     <br>
@@ -521,7 +521,7 @@ class CloudflareZonesManager {
 
     viewZoneDetails(zoneId) {
         // Redirect to zone details page
-        window.location.href = `/CloudflareZoneDetails?id=${zoneId}`;
+        window.location.href = `/cloudflare/zones/details?id=${zoneId}`;
     }
 
     showDeleteZoneModal(zoneId, zoneName) {

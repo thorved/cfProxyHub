@@ -318,7 +318,7 @@ class CloudflareZoneDetailsManager {
             
             // Redirect to zones list after successful deletion
             setTimeout(() => {
-                window.location.href = '/CloudflareZones';
+                window.location.href = '/cloudflare/zones';
             }, 2000);
         } catch (error) {
             console.error('Error deleting zone:', error);

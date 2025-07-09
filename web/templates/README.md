@@ -9,10 +9,15 @@ templates/
 ├── auth/                    # Authentication-related pages
 │   └── login.html          # User login form
 ├── cloudflare/             # Cloudflare management pages
-│   ├── CloudflareAccounts.html
-│   ├── CloudflareAllTunnels.html
-│   ├── Cloudflare_CreateTunnel.html
-│   └── Cloudflare_TunnelPublicHostname.html
+│   ├── accounts/           # Account management templates
+│   │   └── CloudflareAccounts.html
+│   ├── tunnels/            # Tunnel management templates
+│   │   ├── CloudflareAllTunnels.html
+│   │   ├── Cloudflare_CreateTunnel.html
+│   │   └── Cloudflare_TunnelPublicHostname.html
+│   └── zones/              # Zone management templates
+│       ├── CloudflareZones.html
+│       └── CloudflareZoneDetails.html
 ├── dashboard/              # Dashboard and main application pages
 │   └── Dashboard.html      # Main dashboard page
 └── layouts/                # Reusable layout components
@@ -33,19 +38,20 @@ Layout components in the `layouts/` folder are included using Go template syntax
 ```
 **Note:** Gin loads templates by filename only, regardless of their directory structure.
 
-### Go Code References
-Templates are referenced in Go code using just their filename:
-```go
-c.HTML(http.StatusOK, "login.html", gin.H{})
-c.HTML(http.StatusOK, "Dashboard.html", gin.H{})
-c.HTML(http.StatusOK, "CloudflareAccounts.html", gin.H{})
-```
-**Note:** Even though templates are organized in folders, Gin references them by filename only.
-
 ### Template Loading
 Templates are loaded using a glob pattern that includes all subdirectories:
 ```go
-router.LoadHTMLGlob("web/templates/*/*.html")
+router.LoadHTMLGlob("web/templates/**/*.html")
+```
+
+### Go Code References
+Templates are referenced in Go code using their relative path from the templates directory:
+```go
+c.HTML(http.StatusOK, "auth/login.html", gin.H{})
+c.HTML(http.StatusOK, "dashboard/Dashboard.html", gin.H{})
+c.HTML(http.StatusOK, "cloudflare/accounts/CloudflareAccounts.html", gin.H{})
+c.HTML(http.StatusOK, "cloudflare/tunnels/CloudflareAllTunnels.html", gin.H{})
+c.HTML(http.StatusOK, "cloudflare/zones/CloudflareZones.html", gin.H{})
 ```
 
 ## Important Gin Framework Limitation

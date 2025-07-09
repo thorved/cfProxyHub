@@ -318,7 +318,7 @@ function initializePage() {
   if (!selectedTunnelId || !selectedAccountId) {
     showNotification('error', 'Missing tunnel or account information');
     setTimeout(() => {
-      window.location.href = '/CloudflareAllTunnels';
+      window.location.href = '/cloudflare/tunnels';
     }, 2000);
     return;
   }
