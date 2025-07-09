@@ -40,9 +40,9 @@ func (h *CloudflareAccountHandler) GetAccounts(c *gin.Context) {
 	})
 }
 
-// GetAccountByID handles the GET /api/cloudflare/accounts/:id endpoint
+// GetAccountByID handles the GET /api/cloudflare/accounts/:accountId endpoint
 func (h *CloudflareAccountHandler) GetAccountByID(c *gin.Context) {
-	accountID := c.Param("id")
+	accountID := c.Param("accountId")
 	if accountID == "" {
 		utils.ErrorResponse(c, "Account ID is required", http.StatusBadRequest)
 		return

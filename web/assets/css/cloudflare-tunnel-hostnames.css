@@ -1,0 +1,45 @@
+/* Cloudflare Tunnel Public Hostnames Page Styles */
+
+/* Only essential page-specific styles that don't override existing UI */
+
+/* Hostname Preview - keep original styling */
+#hostnamePreview {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  padding: 0.75rem;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9rem;
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+}
+
+#hostnamePreview .text-success {
+  color: #28a745 !important;
+  font-weight: 600;
+}
+
+#hostnamePreview .text-muted {
+  color: #6c757d !important;
+}
+
+#hostnamePreview .text-secondary {
+  color: #868e96 !important;
+  font-style: italic;
+}
+
+#hostnamePreview .text-danger {
+  color: #dc3545 !important;
+  font-weight: 600;
+}
+
+/* Loading Animation */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.mdi-spin {
+  animation: spin 1s linear infinite;
+}

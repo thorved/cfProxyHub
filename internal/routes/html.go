@@ -33,4 +33,16 @@ func SetupHTMLRoutes(router *gin.Engine, cfg *config.Config) {
 		c.HTML(http.StatusOK, "CloudflareAccounts.html", gin.H{})
 	})
 
+	router.GET("/CloudflareAllTunnels", middleware.AuthMiddleware(), func(c *gin.Context) {
+		c.HTML(http.StatusOK, "CloudflareAllTunnels.html", gin.H{})
+	})
+
+	router.GET("/Cloudflare_CreateTunnel", middleware.AuthMiddleware(), func(c *gin.Context) {
+		c.HTML(http.StatusOK, "Cloudflare_CreateTunnel.html", gin.H{})
+	})
+
+	router.GET("/Cloudflare_TunnelPublicHostname", middleware.AuthMiddleware(), func(c *gin.Context) {
+		c.HTML(http.StatusOK, "Cloudflare_TunnelPublicHostname.html", gin.H{})
+	})
+
 }
