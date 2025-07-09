@@ -2,9 +2,10 @@ package handlers
 
 import (
 	"cfPorxyHub/internal/config"
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
 // LoginHandler handles user login

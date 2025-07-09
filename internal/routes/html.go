@@ -12,8 +12,11 @@ import (
 
 // SetupHTMLRoutes configures HTML-related routes
 func SetupHTMLRoutes(router *gin.Engine, cfg *config.Config) {
-	// Load HTML templates - Go templates will handle includes via {{template}} syntax
-	router.LoadHTMLGlob("web/templates/*.html")
+	// Load HTML templates from all subdirectories using multiple glob patterns
+	router.LoadHTMLGlob("web/templates/*/*.html")
+
+	// Also load the root level templates if any exist
+	// router.LoadHTMLFiles() can be used for specific files if needed
 
 	// Serve static files
 	router.Static("/assets", "./web/assets")
