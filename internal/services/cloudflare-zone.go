@@ -298,9 +298,7 @@ func (s *CloudflareService) GetDNSRecords(ctx context.Context, zoneID string) ([
 	}
 
 	result := make([]models.DNSRecord, len(records.Result))
-	for i, record := range records.Result {
-		result[i] = record
-	}
+	copy(result, records.Result)
 
 	log.Printf("Successfully fetched %d DNS records for zone %s", len(result), zoneID)
 	return result, nil
@@ -328,9 +326,7 @@ func (s *CloudflareService) GetDNSRecordsByName(ctx context.Context, zoneID, nam
 	}
 
 	result := make([]models.DNSRecord, len(records.Result))
-	for i, record := range records.Result {
-		result[i] = record
-	}
+	copy(result, records.Result)
 
 	log.Printf("Successfully fetched %d DNS records for zone %s, name %s", len(result), zoneID, name)
 	return result, nil

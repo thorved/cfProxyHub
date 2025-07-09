@@ -26,17 +26,46 @@ $(document).ready(function() {
   
   // Add hostname buttons
   $('#addHostnameBtn, #addFirstHostnameBtn').on('click', function() {
+    console.log('Add hostname button clicked');
     showHostnameModal();
   });
   
-  // Edit hostname
-  $(document).on('click', '.edit-hostname-btn', function() {
+  // Edit hostname - with multiple selectors to debug
+  $(document).on('click', '.edit-hostname-btn', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('Edit button clicked!');
+    console.log('Button element:', this);
+    console.log('Button data attributes:', $(this).data());
+    
     const hostname = $(this).data('hostname');
     const serviceType = $(this).data('service-type');
     const serviceUrl = $(this).data('service-url');
     const path = $(this).data('path');
     
+    console.log('Edit button clicked - hostname:', hostname);
+    console.log('Edit button clicked - serviceType:', serviceType);
+    console.log('Edit button clicked - serviceUrl:', serviceUrl);
+    console.log('Edit button clicked - path:', path);
+    
     showHostnameModal(hostname, serviceType, serviceUrl, path);
+  });
+  
+  // Alternative selector as backup
+  $(document).on('click', 'button:contains("Edit")', function(e) {
+    console.log('Alternative Edit button selector triggered');
+    if ($(this).hasClass('edit-hostname-btn')) {
+      console.log('This is indeed an edit button');
+    } else {
+      console.log('This is not an edit button, classes:', $(this).attr('class'));
+    }
+  });
+  
+  // Debug all button clicks in the table
+  $(document).on('click', '#hostnamesList button', function(e) {
+    console.log('Any button in hostnames table clicked');
+    console.log('Button classes:', $(this).attr('class'));
+    console.log('Button text:', $(this).text().trim());
   });
   
   // Delete hostname
@@ -192,7 +221,40 @@ $(document).ready(function() {
   
   // Reset modal when closed
   $('#hostnameModal').on('hidden.bs.modal', function() {
+    console.log('Modal hidden event triggered');
     resetHostnameForm();
+    // Reset modal title to default "Add" mode when closed
+    $('#hostnameModalLabel').html(`
+      <i class="mdi mdi-plus mr-2"></i>Add Public Hostname
+    `);
+  });
+  
+  // Debug modal show event
+  $('#hostnameModal').on('show.bs.modal', function() {
+    console.log('Modal show event triggered');
+    console.log('Current modal title:', $('#hostnameModalLabel').html());
+    console.log('Current edit mode:', isEditMode);
+  });
+  
+  // Debug modal shown event
+  $('#hostnameModal').on('shown.bs.modal', function() {
+    console.log('Modal shown event triggered');
+    console.log('Current edit mode in shown event:', isEditMode);
+    
+    // Ensure the title is set correctly after modal is fully shown
+    if (isEditMode) {
+      console.log('Final setting of Edit title in shown event');
+      $('#hostnameModalLabel').html(`
+        <i class="mdi mdi-pencil mr-2"></i>Edit Public Hostname
+      `);
+    } else {
+      console.log('Final setting of Add title in shown event');
+      $('#hostnameModalLabel').html(`
+        <i class="mdi mdi-plus mr-2"></i>Add Public Hostname
+      `);
+    }
+    
+    console.log('Final modal title:', $('#hostnameModalLabel').html());
   });
   
   // Handle Enter key in form inputs
@@ -475,23 +537,42 @@ function renderHostnames(hostnames) {
       serviceType = 'https';
       cleanUrl = serviceUrl.substring(8);
     } else if (serviceUrl.startsWith('http://')) {
+      serviceType = 'http';
       cleanUrl = serviceUrl.substring(7);
     } else if (serviceUrl.startsWith('tcp://')) {
       serviceType = 'tcp';
       cleanUrl = serviceUrl.substring(6);
+    } else if (serviceUrl.includes('://')) {
+      // Handle other protocols
+      const parts = serviceUrl.split('://');
+      serviceType = parts[0];
+      cleanUrl = parts[1];
     }
     
+    // Ensure we have valid data for editing
+    const editHostname = hostname.hostname || '';
+    const editServiceType = serviceType || 'http';
+    const editServiceUrl = cleanUrl || '';
+    const editPath = hostname.path || '/';
+    
+    console.log('Rendering hostname row:', {
+      hostname: editHostname,
+      serviceType: editServiceType,
+      serviceUrl: editServiceUrl,
+      path: editPath
+    });
+    
     // Add row to table
-    tbody.append(`
+    const rowHtml = `
       <tr>
         <td>
           <div class="d-flex align-items-center">
-            <div class="preview-icon bg-gradient-info rounded-circle mr-3" style="width: 40px; height: 40px;">
+            <div class="preview-icon bg-gradient-info rounded-circle mr-3" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
               <i class="mdi mdi-earth text-white"></i>
             </div>
             <div>
-              <h6 class="mb-1 font-weight-medium">${hostname.hostname}</h6>
-              <p class="text-muted mb-0 small">${hostname.path || '/'}</p>
+              <h6 class="mb-1 font-weight-medium">${editHostname}</h6>
+              <p class="text-muted mb-0 small">${editPath}</p>
             </div>
           </div>
         </td>
@@ -509,18 +590,21 @@ function renderHostnames(hostnames) {
         </td>
         <td>
           <button class="btn btn-sm btn-light edit-hostname-btn" 
-                  data-hostname="${hostname.hostname}" 
-                  data-service-type="${serviceType}" 
-                  data-service-url="${cleanUrl}" 
-                  data-path="${hostname.path || '/'}">
+                  data-hostname="${editHostname.replace(/"/g, '&quot;')}" 
+                  data-service-type="${editServiceType}" 
+                  data-service-url="${editServiceUrl.replace(/"/g, '&quot;')}" 
+                  data-path="${editPath.replace(/"/g, '&quot;')}">
             <i class="mdi mdi-pencil"></i> Edit
           </button>
-          <button class="btn btn-sm btn-danger delete-hostname-btn" data-hostname="${hostname.hostname}">
+          <button class="btn btn-sm btn-danger delete-hostname-btn" data-hostname="${editHostname.replace(/"/g, '&quot;')}">
             <i class="mdi mdi-delete"></i> Delete
           </button>
         </td>
       </tr>
-    `);
+    `;
+    
+    console.log('Generated row HTML:', rowHtml);
+    tbody.append(rowHtml);
   });
   
   // Update hostname count
@@ -549,35 +633,140 @@ function getStatusBadge(status) {
 
 // Show hostname modal for adding or editing
 function showHostnameModal(hostname, serviceType, serviceUrl, path) {
-  isEditMode = !!hostname;
-  currentHostname = hostname || null;
+  console.log('showHostnameModal called with:', { hostname, serviceType, serviceUrl, path });
   
-  // Reset form
+  const editMode = !!hostname; // Store edit mode before reset
+  const originalHostname = hostname; // Store original hostname before any operations
+  
+  // Reset form first
   resetHostnameForm();
   
-  if (isEditMode) {
+  // Set edit mode state after form reset
+  isEditMode = editMode;
+  currentHostname = originalHostname || null;
+  
+  console.log('Edit mode set to:', isEditMode);
+  console.log('Current hostname set to:', currentHostname);
+  
+  // Set modal title after form reset - use stored editMode variable
+  setTimeout(() => {
+    if (editMode) {
+      console.log('Setting modal title to Edit mode');
+      $('#hostnameModalLabel').html(`
+        <i class="mdi mdi-pencil mr-2"></i>Edit Public Hostname
+      `);
+      console.log('Modal title after setting:', $('#hostnameModalLabel').html());
+    } else {
+      console.log('Setting modal title to Add mode');
+      $('#hostnameModalLabel').html(`
+        <i class="mdi mdi-plus mr-2"></i>Add Public Hostname
+      `);
+    }
+  }, 10);
+  
+  if (editMode) {
+    // Re-set edit mode after reset (since resetHostnameForm clears it)
+    isEditMode = true;
+    currentHostname = hostname;
+    
     // Edit mode - pre-fill form fields
     const parsed = parseHostname(hostname);
-    $('#subdomain').val(parsed.subdomain);
-    $('#domain').val(parsed.domain);
-    $('#serviceType').val(serviceType);
-    $('#serviceUrl').val(serviceUrl);
-    $('#path').val(path);
+    console.log('Edit mode - parsed hostname:', parsed);
+    console.log('Edit mode - serviceType:', serviceType);
+    console.log('Edit mode - serviceUrl:', serviceUrl);
+    console.log('Edit mode - path:', path);
     
-    $('#hostnameModalLabel').html(`
-      <i class="mdi mdi-pencil mr-2"></i>Edit Public Hostname
-    `);
+    // Set fields immediately first (in case domains are already loaded)
+    $('#subdomain').val(parsed.subdomain);
+    
+    // Check if domains are already loaded
+    const domainSelect = $('#domain');
+    const existingOptions = domainSelect.find('option').length;
+    
+    if (existingOptions > 1) {
+      // Domains already loaded, populate immediately
+      populateEditFields(parsed, serviceType, serviceUrl, path);
+      $('#hostnameModal').modal('show');
+    } else {
+      // Load domains first
+      loadDomains().then(() => {
+        populateEditFields(parsed, serviceType, serviceUrl, path);
+        $('#hostnameModal').modal('show');
+      }).catch(error => {
+        console.error('Error loading domains for edit:', error);
+        // Fallback to manual input
+        populateEditFieldsManual(parsed, serviceType, serviceUrl, path);
+        $('#hostnameModal').modal('show');
+      });
+    }
   } else {
-    $('#hostnameModalLabel').html(`
-      <i class="mdi mdi-plus mr-2"></i>Add Public Hostname
-    `);
+    // Add mode - just load domains
+    loadDomains().then(() => {
+      // Show modal after domains are loaded
+      $('#hostnameModal').modal('show');
+    }).catch(error => {
+      console.error('Error loading domains:', error);
+      // Show modal even if domain loading failed
+      $('#hostnameModal').modal('show');
+    });
+  }
+}
+
+// Helper function to populate edit fields when domains are available
+function populateEditFields(parsed, serviceType, serviceUrl, path) {
+  const domainSelect = $('#domain');
+  const domainExists = domainSelect.find(`option[value="${parsed.domain}"]`).length > 0;
+  
+  if (domainExists) {
+    // Use dropdown
+    domainSelect.val(parsed.domain);
+    $('#manualDomain').hide().val('');
+    $('#manualDomainHelp').hide();
+    $('#manualDomainToggle').text("Can't find your domain? Enter manually");
+  } else {
+    // Use manual input
+    domainSelect.hide();
+    $('#manualDomain').show().val(parsed.domain);
+    $('#manualDomainHelp').show();
+    $('#manualDomainToggle').text("Use domain dropdown instead");
   }
   
-  // Update hostname preview
-  updateHostnamePreview();
+  // Set other fields
+  $('#serviceType').val(serviceType);
+  $('#serviceUrl').val(serviceUrl);
+  $('#path').val(path || '/');
   
-  // Show modal
-  $('#hostnameModal').modal('show');
+  console.log('Fields populated - subdomain:', $('#subdomain').val());
+  console.log('Fields populated - domain:', getDomainValue());
+  console.log('Fields populated - serviceType:', $('#serviceType').val());
+  console.log('Fields populated - serviceUrl:', $('#serviceUrl').val());
+  console.log('Fields populated - path:', $('#path').val());
+  
+  // Update hostname preview and validation
+  setTimeout(() => {
+    updateHostnamePreview();
+    validateForm();
+  }, 50);
+}
+
+// Helper function to populate edit fields with manual domain input
+function populateEditFieldsManual(parsed, serviceType, serviceUrl, path) {
+  // Use manual input
+  $('#domain').hide();
+  $('#manualDomain').show().val(parsed.domain);
+  $('#manualDomainHelp').show();
+  $('#manualDomainToggle').text("Use domain dropdown instead");
+  
+  // Set other fields
+  $('#serviceType').val(serviceType);
+  $('#serviceUrl').val(serviceUrl);
+  $('#path').val(path || '/');
+  
+  // Update hostname preview and validation
+  setTimeout(() => {
+    updateHostnamePreview();
+    validateForm();
+  }, 50);
 }
 
 // Reset hostname form
@@ -590,12 +779,17 @@ function resetHostnameForm() {
   $('#serviceUrl').removeClass('is-valid is-invalid');
   $('#path').removeClass('is-valid is-invalid');
   $('.invalid-feedback').remove();
+  
+  // Reset manual domain toggle
+  $('#domain').show();
+  $('#manualDomain').hide().val('');
+  $('#manualDomainHelp').hide();
+  $('#manualDomainToggle').text("Can't find your domain? Enter manually");
+  
+  // Reset edit mode state but don't set modal title here
+  // Modal title will be set explicitly in showHostnameModal
   isEditMode = false;
   currentHostname = null;
-  
-  $('#hostnameModalLabel').html(`
-    <i class="mdi mdi-plus mr-2"></i>Add Public Hostname
-  `);
 }
 
 // Validate hostname
@@ -685,10 +879,16 @@ function saveHostname() {
   };
   
   console.log('Saving hostname:', requestData);
+  console.log('Edit mode:', isEditMode);
+  console.log('Current hostname (original):', currentHostname);
+  console.log('New hostname:', fullHostname);
   
   const url = isEditMode ? 
-    `/api/cloudflare/accounts/${selectedAccountId}/tunnels/${selectedTunnelId}/hostnames/${encodeURIComponent(fullHostname)}` :
+    `/api/cloudflare/accounts/${selectedAccountId}/tunnels/${selectedTunnelId}/hostnames/${encodeURIComponent(currentHostname)}` :
     `/api/cloudflare/accounts/${selectedAccountId}/tunnels/${selectedTunnelId}/hostnames`;
+  
+  console.log('Request URL:', url);
+  console.log('Request method:', isEditMode ? 'PUT' : 'POST');
   
   const method = isEditMode ? 'PUT' : 'POST';
   
@@ -701,8 +901,18 @@ function saveHostname() {
     body: JSON.stringify(requestData)
   })
   .then(response => {
+    console.log('Response status:', response.status);
+    console.log('Response headers:', response.headers);
+    
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      // Try to get error message from response
+      return response.json().then(errorData => {
+        console.log('Error response data:', errorData);
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      }).catch(jsonError => {
+        console.log('Failed to parse error response as JSON:', jsonError);
+        throw new Error(`HTTP error! status: ${response.status}`);
+      });
     }
     return response.json();
   })

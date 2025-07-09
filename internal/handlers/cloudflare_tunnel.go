@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -342,6 +343,8 @@ func (h *CloudflareTunnelHandler) UpdatePublicHostname(c *gin.Context) {
 	tunnelID := c.Param("tunnel_id")
 	targetHostname := c.Param("hostname")
 
+	log.Printf("UpdatePublicHostname called with accountID: %s, tunnelID: %s, targetHostname: %s", accountID, tunnelID, targetHostname)
+
 	if accountID == "" {
 		utils.ErrorResponse(c, "Account ID is required", http.StatusBadRequest)
 		return
@@ -363,9 +366,12 @@ func (h *CloudflareTunnelHandler) UpdatePublicHostname(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindJSON(&requestData); err != nil {
+		log.Printf("Error binding JSON: %v", err)
 		utils.ErrorResponse(c, "Invalid request body: "+err.Error(), http.StatusBadRequest)
 		return
 	}
+
+	log.Printf("Request data: hostname=%s, service=%s, path=%s", requestData.Hostname, requestData.Service, requestData.Path)
 
 	// Validate required fields
 	if requestData.Hostname == "" {
@@ -383,12 +389,17 @@ func (h *CloudflareTunnelHandler) UpdatePublicHostname(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
+	log.Printf("Calling UpdateCloudflareTunnelPublicHostnameWithDNS with targetHostname: %s, newHostname: %s", targetHostname, requestData.Hostname)
+
 	// Use the new function that updates both tunnel config and DNS record
 	result, err := h.cfService.UpdateCloudflareTunnelPublicHostnameWithDNS(ctx, accountID, tunnelID, targetHostname, requestData.Hostname, hostnameParam)
 	if err != nil {
+		log.Printf("Error updating public hostname: %v", err)
 		utils.ErrorResponse(c, "Failed to update public hostname: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	log.Printf("Successfully updated public hostname")
 
 	utils.SuccessResponse(c, gin.H{
 		"message":         "Public hostname updated successfully",

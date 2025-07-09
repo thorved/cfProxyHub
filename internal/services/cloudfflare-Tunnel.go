@@ -280,6 +280,8 @@ func (cs *CloudflareService) CreateCloudflareTunnelPublicHostname(ctx context.Co
 
 // UpdateCloudflareTunnelPublicHostname updates a specific public hostname (ingress rule) for a tunnel
 func (cs *CloudflareService) UpdateCloudflareTunnelPublicHostname(ctx context.Context, accountID, tunnelID, targetHostname string, updatedHostname models.PublicHostnameIngressParam) (models.TunnelConfigurationUpdateResponse, error) {
+	log.Printf("UpdateCloudflareTunnelPublicHostname called with accountID: %s, tunnelID: %s, targetHostname: %s", accountID, tunnelID, targetHostname)
+
 	if accountID == "" {
 		return models.TunnelConfigurationUpdateResponse{}, fmt.Errorf("account ID is required")
 	}
@@ -290,30 +292,41 @@ func (cs *CloudflareService) UpdateCloudflareTunnelPublicHostname(ctx context.Co
 		return models.TunnelConfigurationUpdateResponse{}, fmt.Errorf("target hostname is required")
 	}
 
+	log.Printf("Getting current tunnel configuration...")
+
 	// Get the current configuration
 	currentConfig, err := cs.client.ZeroTrust.Tunnels.Cloudflared.Configurations.Get(ctx, tunnelID, zero_trust.TunnelCloudflaredConfigurationGetParams{
 		AccountID: cloudflare.F(accountID),
 	})
 	if err != nil {
+		log.Printf("Error getting current tunnel configuration: %v", err)
 		return models.TunnelConfigurationUpdateResponse{}, fmt.Errorf("error getting current tunnel configuration for tunnel %s in account %s: %w", tunnelID, accountID, err)
 	}
+
+	log.Printf("Current configuration retrieved successfully, processing ingress rules...")
 
 	// Create the new ingress rules array with the updated hostname
 	var newIngress []models.PublicHostnameIngressParam
 	found := false
 
 	if currentConfig.Config.Ingress != nil {
-		for _, existing := range currentConfig.Config.Ingress {
+		log.Printf("Found %d existing ingress rules", len(currentConfig.Config.Ingress))
+		for i, existing := range currentConfig.Config.Ingress {
+			log.Printf("Rule %d: hostname=%s, service=%s", i, existing.Hostname, existing.Service)
+
 			// Skip catch-all rules (rules without hostname)
 			if existing.Hostname == "" {
+				log.Printf("Skipping catch-all rule %d", i)
 				continue
 			}
 
 			if existing.Hostname == targetHostname {
+				log.Printf("Found target hostname %s at rule %d, replacing with updated hostname", targetHostname, i)
 				// Replace with the updated hostname
 				newIngress = append(newIngress, updatedHostname)
 				found = true
 			} else {
+				log.Printf("Keeping existing rule %d: %s", i, existing.Hostname)
 				// Keep existing
 				newIngress = append(newIngress, models.PublicHostnameIngressParam{
 					Hostname:      cloudflare.F(existing.Hostname),
@@ -323,17 +336,24 @@ func (cs *CloudflareService) UpdateCloudflareTunnelPublicHostname(ctx context.Co
 				})
 			}
 		}
+	} else {
+		log.Printf("No existing ingress rules found")
 	}
 
 	if !found {
+		log.Printf("Target hostname %s not found in tunnel %s", targetHostname, tunnelID)
 		return models.TunnelConfigurationUpdateResponse{}, fmt.Errorf("hostname %s not found in tunnel %s", targetHostname, tunnelID)
 	}
+
+	log.Printf("Successfully found and updated target hostname, adding catch-all rule")
 
 	// Always add a catch-all rule at the end (required by Cloudflare)
 	catchAllRule := models.PublicHostnameIngressParam{
 		Service: cloudflare.F("http_status:404"),
 	}
 	newIngress = append(newIngress, catchAllRule)
+
+	log.Printf("Updating tunnel configuration with %d total rules", len(newIngress))
 
 	// Update the tunnel configuration
 	updateParams := zero_trust.TunnelCloudflaredConfigurationUpdateParams{
@@ -345,9 +365,11 @@ func (cs *CloudflareService) UpdateCloudflareTunnelPublicHostname(ctx context.Co
 
 	updatedConfig, err := cs.client.ZeroTrust.Tunnels.Cloudflared.Configurations.Update(ctx, tunnelID, updateParams)
 	if err != nil {
+		log.Printf("Error updating tunnel configuration: %v", err)
 		return models.TunnelConfigurationUpdateResponse{}, fmt.Errorf("error updating public hostname for tunnel %s in account %s: %w", tunnelID, accountID, err)
 	}
 
+	log.Printf("Successfully updated tunnel configuration")
 	return *updatedConfig, nil
 }
 
@@ -458,11 +480,16 @@ func (cs *CloudflareService) CreateCloudflareTunnelPublicHostnameWithDNS(ctx con
 
 // UpdateCloudflareTunnelPublicHostnameWithDNS updates a public hostname (ingress rule) and its DNS record
 func (cs *CloudflareService) UpdateCloudflareTunnelPublicHostnameWithDNS(ctx context.Context, accountID, tunnelID, targetHostname, newHostnameValue string, updatedHostname models.PublicHostnameIngressParam) (models.TunnelConfigurationUpdateResponse, error) {
+	log.Printf("UpdateCloudflareTunnelPublicHostnameWithDNS called with accountID: %s, tunnelID: %s, targetHostname: %s, newHostnameValue: %s", accountID, tunnelID, targetHostname, newHostnameValue)
+
 	// First update the tunnel configuration
 	updatedConfig, err := cs.UpdateCloudflareTunnelPublicHostname(ctx, accountID, tunnelID, targetHostname, updatedHostname)
 	if err != nil {
+		log.Printf("Error updating tunnel configuration: %v", err)
 		return models.TunnelConfigurationUpdateResponse{}, err
 	}
+
+	log.Printf("Successfully updated tunnel configuration")
 
 	// If the hostname value changed, we need to update DNS records
 	if targetHostname != newHostnameValue && newHostnameValue != "" {
