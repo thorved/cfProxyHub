@@ -37,4 +37,13 @@ func SetupAPIRoutes(router *gin.Engine, cfg *config.Config) {
 	api.GET("/current-account", accountHandler.GetCurrentAccount)
 	api.POST("/current-account", accountHandler.SetCurrentAccount)
 	api.DELETE("/current-account", accountHandler.ClearCurrentAccount)
+
+	// Debug endpoints - remove in production
+	api.GET("/debug/cloudflare-api", func(c *gin.Context) {
+		// Simple debug endpoint
+		c.JSON(http.StatusOK, gin.H{
+			"success": true,
+			"message": "Debug API endpoint",
+		})
+	})
 }

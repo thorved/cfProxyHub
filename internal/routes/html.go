@@ -13,7 +13,7 @@ import (
 // SetupHTMLRoutes configures HTML-related routes
 func SetupHTMLRoutes(router *gin.Engine, cfg *config.Config) {
 	// Load HTML templates from all subdirectories using multiple glob patterns
-	router.LoadHTMLGlob("web/templates/*/*.html")
+	router.LoadHTMLGlob("web/templates/**/*.html")
 
 	// Also load the root level templates if any exist
 	// router.LoadHTMLFiles() can be used for specific files if needed
@@ -46,6 +46,14 @@ func SetupHTMLRoutes(router *gin.Engine, cfg *config.Config) {
 
 	router.GET("/Cloudflare_TunnelPublicHostname", middleware.AuthMiddleware(), func(c *gin.Context) {
 		c.HTML(http.StatusOK, "Cloudflare_TunnelPublicHostname.html", gin.H{})
+	})
+
+	router.GET("/CloudflareZones", middleware.AuthMiddleware(), func(c *gin.Context) {
+		c.HTML(http.StatusOK, "CloudflareZones.html", gin.H{})
+	})
+
+	router.GET("/CloudflareZoneDetails", middleware.AuthMiddleware(), func(c *gin.Context) {
+		c.HTML(http.StatusOK, "CloudflareZoneDetails.html", gin.H{})
 	})
 
 }
