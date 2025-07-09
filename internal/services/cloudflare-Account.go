@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"cfPorxyHub/internal/models"
+	"cfProxyHub/internal/models"
 
 	"github.com/cloudflare/cloudflare-go/v4/accounts"
 )

@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"cfPorxyHub/internal/models"
-	"cfPorxyHub/internal/services"
+	"cfProxyHub/internal/models"
+	"cfProxyHub/internal/services"
 )
 
 // This script tests the automatic DNS record creation when adding a public hostname to a tunnel

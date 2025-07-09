@@ -6,9 +6,9 @@ import (
 	"strconv"
 	"time"
 
-	"cfPorxyHub/internal/models"
-	"cfPorxyHub/internal/services"
-	"cfPorxyHub/pkg/utils"
+	"cfProxyHub/internal/models"
+	"cfProxyHub/internal/services"
+	"cfProxyHub/pkg/utils"
 
 	"github.com/gin-gonic/gin"
 )

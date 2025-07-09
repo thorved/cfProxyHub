@@ -1,8 +1,8 @@
 package handlers
 
 import (
-	"cfPorxyHub/internal/services"
-	"cfPorxyHub/pkg/utils"
+	"cfProxyHub/internal/services"
+	"cfProxyHub/pkg/utils"
 	"net/http"
 
 	"github.com/gin-gonic/gin"

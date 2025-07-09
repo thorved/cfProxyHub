@@ -1,7 +1,7 @@
 package routes
 
 import (
-	"cfPorxyHub/internal/config"
+	"cfProxyHub/internal/config"
 
 	"github.com/gin-gonic/gin"
 )

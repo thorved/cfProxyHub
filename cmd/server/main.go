@@ -1,8 +1,8 @@
 package main
 
 import (
-	"cfPorxyHub/internal/config"
-	"cfPorxyHub/internal/routes"
+	"cfProxyHub/internal/config"
+	"cfProxyHub/internal/routes"
 
 	"github.com/gin-gonic/gin"
 )

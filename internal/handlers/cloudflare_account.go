@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"time"
 
-	"cfPorxyHub/internal/services"
-	"cfPorxyHub/pkg/utils"
+	"cfProxyHub/internal/services"
+	"cfProxyHub/pkg/utils"
 
 	"github.com/gin-gonic/gin"
 )

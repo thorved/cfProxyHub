@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"path/filepath"
 
-	"cfPorxyHub/internal/config"
-	"cfPorxyHub/internal/handlers"
-	"cfPorxyHub/internal/middleware"
+	"cfProxyHub/internal/config"
+	"cfProxyHub/internal/handlers"
+	"cfProxyHub/internal/middleware"
 
 	"github.com/gin-gonic/gin"
 )

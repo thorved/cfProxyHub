@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"cfPorxyHub/internal/config"
+	"cfProxyHub/internal/config"
 	"net/http"
 	"time"
 

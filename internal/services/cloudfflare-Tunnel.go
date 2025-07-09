@@ -6,7 +6,7 @@ import (
 	"log"
 	"strings"
 
-	"cfPorxyHub/internal/models"
+	"cfProxyHub/internal/models"
 
 	"github.com/cloudflare/cloudflare-go/v4"
 	"github.com/cloudflare/cloudflare-go/v4/zero_trust"

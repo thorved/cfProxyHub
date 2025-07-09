@@ -1,10 +1,10 @@
 package routes
 
 import (
-	"cfPorxyHub/internal/config"
-	"cfPorxyHub/internal/handlers"
-	"cfPorxyHub/internal/middleware"
-	"cfPorxyHub/internal/services"
+	"cfProxyHub/internal/config"
+	"cfProxyHub/internal/handlers"
+	"cfProxyHub/internal/middleware"
+	"cfProxyHub/internal/services"
 	"log"
 
 	"github.com/gin-gonic/gin"
