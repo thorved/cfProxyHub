@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Docker Cloudflare Tunnels - CF Proxy Hub</title>
+    <!-- plugins:css -->
+    <link rel="stylesheet" href="/assets/vendors/mdi/css/materialdesignicons.min.css">
+    <link rel="stylesheet" href="/assets/vendors/css/vendor.bundle.base.css">
+    <!-- endinject -->
+    <!-- Plugin css for this page -->
+    <!-- End plugin css for this page -->
+    <!-- inject:css -->
+    <!-- endinject -->
+    <!-- Layout styles -->
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <link rel="stylesheet" href="/assets/css/docker-cloudflare-tunnels.css">
+    <!-- End layout styles -->
+    <link rel="shortcut icon" href="/assets/images/favicon.png" />
+  </head>
+  <body>
+    <div class="container-scroller">
+      <!-- partial:partials/_sidebar.html -->
+      {{template "sidebar.html" .}}
+      <!-- partial -->
+      <div class="container-fluid page-body-wrapper">
+        <!-- partial:partials/_navbar.html -->
+        {{template "header.html" .}}
+        <!-- partial -->
+        <div class="main-panel">
+          <div class="content-wrapper">
+            <div class="page-header">
+              <h3 class="page-title">
+                <i class="mdi mdi-docker text-primary"></i>
+                Docker Cloudflare Tunnels
+              </h3>
+            </div>
+
+                    <div class="row">
+                        <div class="col-12 grid-margin">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h4 class="card-title">Create New Cloudflare Tunnel</h4>
+                                    <div class="form-group">
+                                        <label for="tunnelName">Tunnel Name</label>
+                                        <input type="text" class="form-control" id="tunnelName" placeholder="Enter tunnel name">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="tunnelToken">Cloudflare Tunnel Token</label>
+                                        <input type="text" class="form-control" id="tunnelToken" placeholder="Enter your Cloudflare tunnel token">
+                                        <small class="form-text text-muted">Example: eyJhIjoiNzg0MzQ3YzQ5M2Y3ZjU2ODMyMDllYzc5ZjA1NWVhMzUiLCJ0IjoiOTUyYWZiMzItZWQ2Zi00...</small>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="restartPolicy">Restart Policy</label>
+                                        <select class="form-control" id="restartPolicy">
+                                            <option value="always">Always</option>
+                                            <option value="unless-stopped">Unless Stopped</option>
+                                            <option value="on-failure">On Failure</option>
+                                            <option value="no">No (Don't restart)</option>
+                                        </select>
+                                    </div>
+                                    <button id="createTunnelBtn" class="btn btn-primary mr-2">Create Tunnel</button>
+                                    
+                                    <!-- Add diagnostic buttons -->
+                                    <button id="checkDockerBtn" class="btn btn-info mr-2" onclick="checkDockerConnectivity()">
+                                        <i class="mdi mdi-connection"></i> Check Docker Connectivity
+                                    </button>
+                                    <button id="diagnosticsBtn" class="btn btn-secondary" onclick="getDockerDiagnostics()">
+                                        <i class="mdi mdi-bug"></i> Diagnostics
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-12 grid-margin">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <h4 class="card-title">Existing Tunnels</h4>
+                                        <button class="btn btn-outline-primary btn-sm" onclick="loadTunnels()">
+                                            <i class="mdi mdi-refresh"></i> Refresh
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- Loading indicator -->
+                                    <div id="loadingIndicator" class="text-center my-4">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="sr-only">Loading...</span>
+                                        </div>
+                                        <p class="mt-2">Loading tunnels...</p>
+                                    </div>
+                                    
+                                    <!-- Error message container -->
+                                    <div id="errorContainer" class="alert alert-danger my-3" style="display: none;">
+                                        <strong>Error:</strong> <span id="errorMessage">Unable to load tunnels.</span>
+                                    </div>
+                                    
+                                    <div class="table-responsive">
+                                        <table class="table table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>Container ID</th>
+                                                    <th>Name</th>
+                                                    <th>Status</th>
+                                                    <th>Created</th>
+                                                    <th>Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="tunnelsTableBody">
+                                                <tr id="noTunnelsRow">
+                                                    <td colspan="5" class="text-center">No Cloudflare tunnel containers found</td>
+                                                </tr>
+                                                <!-- Tunnels will be loaded here dynamically -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Debug section (will be hidden in production) -->
+                <div id="debugSection" class="container mt-3 mb-3 bg-dark text-light p-3" style="display: none;">
+                  <h5>Debug Information</h5>
+                  <pre id="debugInfo">Page loaded successfully. Waiting for JavaScript...</pre>
+                </div>
+              </div>
+              <!-- content-wrapper ends -->
+              <!-- partial:partials/_footer.html -->
+              {{template "footer.html" .}}
+              <!-- partial -->
+            </div>
+            <!-- main-panel ends -->
+          </div>
+          <!-- page-body-wrapper ends -->
+        </div>
+        <!-- container-scroller -->
+        
+        <!-- plugins:js -->
+        <script src="/assets/vendors/js/vendor.bundle.base.js"></script>
+        <!-- endinject -->
+        <!-- Plugin js for this page -->
+        <script src="/assets/vendors/chart.js/Chart.min.js"></script>
+        <script src="/assets/vendors/progressbar.js/progressbar.min.js"></script>
+        <script src="/assets/vendors/jvectormap/jquery-jvectormap.min.js"></script>
+        <script src="/assets/vendors/jvectormap/jquery-jvectormap-world-mill-en.js"></script>
+        <script src="/assets/vendors/owl-carousel-2/owl.carousel.min.js"></script>
+        <!-- End plugin js for this page -->
+        
+        <!-- inject:js -->
+        <script src="/assets/js/off-canvas.js"></script>
+        <script src="/assets/js/hoverable-collapse.js"></script>
+        <script src="/assets/js/misc.js"></script>
+        <script src="/assets/js/settings.js"></script>
+        <script src="/assets/js/todolist.js"></script>
+        <!-- endinject -->
+        
+        <!-- Custom js for this page -->
+        <script src="/assets/js/docker-cloudflare-tunnels.js"></script>
+        <script src="/assets/js/docker-cloudflare-tunnel-fix.js"></script>
+        
+        <!-- Initialize jQuery plugins -->
+        <script>
+          // Simple check to see if the page loads
+          document.addEventListener('DOMContentLoaded', function() {
+              console.log("Page DOM loaded successfully");
+              
+              // Show debug section during development
+              document.getElementById('debugSection').style.display = 'block';
+              document.getElementById('debugInfo').textContent += "\nDOM loaded successfully.";
+              
+              // Check if jQuery is available
+              if (typeof jQuery !== 'undefined') {
+                  document.getElementById('debugInfo').textContent += "\njQuery is available.";
+                  
+                  // Initialize Bootstrap components
+                  try {
+                      // Initialize all tooltips
+                      $('[data-toggle="tooltip"]').tooltip();
+                      document.getElementById('debugInfo').textContent += "\nTooltips initialized successfully.";
+                  } catch(err) {
+                      document.getElementById('debugInfo').textContent += "\nError initializing tooltips: " + err.message;
+                  }
+              } else {
+                  document.getElementById('debugInfo').textContent += "\njQuery is NOT available!";
+              }
+          });
+          
+          // Fallback functionality - wait for everything else to load then try to fix any issues
+          window.addEventListener('load', function() {
+              // Fix tooltip function if needed
+              if (typeof jQuery !== 'undefined') {
+                  if (typeof $.fn.tooltip !== 'function') {
+                      $.fn.tooltip = function() { return this; };
+                      console.log("Added tooltip fallback after page load");
+                  }
+                  
+                  // Try initializing tooltips again
+                  try {
+                      $('[data-toggle="tooltip"]').tooltip();
+                  } catch (err) {
+                      console.log("Could not initialize tooltips: " + err.message);
+                  }
+              }
+          });
+        </script>
+        <!-- End custom js for this page -->
+    </body>
+</html>

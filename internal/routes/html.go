@@ -69,6 +69,14 @@ func SetupHTMLRoutes(router *gin.Engine, cfg *config.Config) {
 		c.HTML(http.StatusOK, "Cloudflare_TunnelPublicHostname.html", gin.H{})
 	})
 
+	// Docker Cloudflare Tunnels route
+	router.GET("/cloudflare/docker-tunnels", middleware.AuthMiddleware(), func(c *gin.Context) {
+		// Use the template-based version now that it's fixed
+		c.HTML(http.StatusOK, "DockerCloudflareTunnels.html", gin.H{})
+		// Keep standalone version commented in case it's needed for debugging
+		// c.HTML(http.StatusOK, "DockerCloudflareTunnels-standalone.html", gin.H{})
+	})
+
 	// Cloudflare Zone routes
 	router.GET("/cloudflare/zones", middleware.AuthMiddleware(), func(c *gin.Context) {
 		c.HTML(http.StatusOK, "CloudflareZones.html", gin.H{})

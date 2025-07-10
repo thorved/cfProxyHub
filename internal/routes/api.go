@@ -3,20 +3,18 @@ package routes
 import (
 	"cfProxyHub/internal/config"
 	"cfProxyHub/internal/middleware"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
 // SetupAPIRoutes configures the API routes for the application (excluding auth routes)
 func SetupAPIRoutes(router *gin.Engine, cfg *config.Config) {
-
 	// Create a new group for API routes
 	api := router.Group("/api")
 
 	// Health check endpoint (public - no authentication required)
 	api.GET("/health", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
+		c.JSON(200, gin.H{
 			"status":  "healthy",
 			"service": "cfProxyHub",
 			"timestamp": gin.H{
@@ -30,10 +28,9 @@ func SetupAPIRoutes(router *gin.Engine, cfg *config.Config) {
 
 	// Status endpoint to check authentication
 	api.GET("/status", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
+		c.JSON(200, gin.H{
 			"authenticated": true,
 			"message":       "User is authenticated",
 		})
 	})
-
 }
