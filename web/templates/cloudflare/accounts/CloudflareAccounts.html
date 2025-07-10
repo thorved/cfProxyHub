@@ -160,40 +160,11 @@
           // Show success message
           showNotification('success', `${accountName} has been selected successfully!`);
           
-          // Store selection in localStorage
+          // Store selection in localStorage only
           localStorage.setItem('selectedAccount', JSON.stringify({
             id: accountId,
             name: accountName
           }));
-
-          // Also update server-side (optional, for future server-side persistence)
-          fetch('/api/current-account', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            credentials: 'same-origin',
-            body: JSON.stringify({
-              id: accountId,
-              name: accountName
-            })
-          })
-          .then(response => {
-            if (!response.ok) {
-              throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return response.json();
-          })
-          .then(data => {
-            if (data.status === 'success' && data.data && data.data.success) {
-              console.log('Server-side account update successful:', data.data.message);
-            } else {
-              console.warn('Server-side account update response:', data);
-            }
-          })
-          .catch(error => {
-            console.log('Server-side account update failed (non-critical):', error);
-          });
           
           // Dispatch custom event to update sidebar immediately
           window.dispatchEvent(new CustomEvent('accountSelected', {

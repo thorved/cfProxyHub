@@ -20,28 +20,7 @@ class CloudflareZoneDetailsManager {
     }
 
     async loadCurrentAccount() {
-        try {
-            // First try to get current account from API
-            const response = await fetch('/api/current-account', {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                if (data.success && data.account) {
-                    this.currentAccountId = data.account.id;
-                    this.currentAccountName = data.account.name;
-                    console.log('Loaded current account from API:', data.account);
-                    return;
-                }
-            }
-        } catch (error) {
-            console.warn('Failed to get current account from API:', error);
-        }
-
-        // Fallback to localStorage
+        // Load from localStorage only
         try {
             const savedAccount = localStorage.getItem('selectedAccount');
             if (savedAccount) {

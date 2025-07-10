@@ -104,39 +104,7 @@ class CloudflareZonesManager {
     async loadCurrentAccount() {
         this.showAccountSelectLoading(true);
         
-        try {
-            // First try to get current account from API
-            const response = await fetch('/api/current-account', {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                if (data.success && data.account) {
-                    this.currentAccountId = data.account.id;
-                    this.currentAccountName = data.account.name;
-                    console.log('Loaded current account from API:', data.account);
-                    
-                    // Load accounts list and pre-select the current one
-                    await this.loadAccounts();
-                    $('#accountSelect').val(this.currentAccountId);
-                    this.showCurrentAccountInfo();
-                    
-                    // Auto-load zones for the current account
-                    this.loadZones();
-                    $('#zoneStats, #zoneActions').show();
-                    $('#refreshBtn').prop('disabled', false);
-                    this.hidePageLoadingWithDelay();
-                    return;
-                }
-            }
-        } catch (error) {
-            console.warn('Failed to get current account from API:', error);
-        }
-
-        // Fallback to localStorage
+        // Load from localStorage only
         try {
             const savedAccount = localStorage.getItem('selectedAccount');
             if (savedAccount) {
@@ -182,31 +150,12 @@ class CloudflareZonesManager {
         if (!selectedAccount) return;
 
         try {
-            // Save to localStorage
+            // Save to localStorage only
             localStorage.setItem('selectedAccount', JSON.stringify(selectedAccount));
+            console.log('Current account saved to localStorage');
             
-            // Update server-side current account
-            fetch('/api/current-account', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                },
-                body: JSON.stringify({
-                    id: selectedAccount.id,
-                    name: selectedAccount.name
-                })
-            }).then(response => {
-                if (response.ok) {
-                    console.log('Current account saved to server');
-                    // Trigger event for sidebar update
-                    window.dispatchEvent(new Event('accountSelected'));
-                } else {
-                    console.warn('Failed to save account to server');
-                }
-            }).catch(error => {
-                console.warn('Error saving account to server:', error);
-            });
+            // Trigger event for sidebar update
+            window.dispatchEvent(new Event('accountSelected'));
         } catch (error) {
             console.error('Error saving current account:', error);
         }

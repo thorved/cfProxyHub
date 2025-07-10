@@ -570,22 +570,7 @@
 
           async loadAccount() {
             this.setLoadingState();
-            
-            try {
-              // Try to load from API first
-              const response = await fetch('/api/current-account');
-              const data = await response.json();
-              
-              if (data.status === 'success' && data.data && data.data.success && data.data.account) {
-                this.setAccount(data.data.account);
-                this.saveToStorage(data.data.account);
-              } else {
-                this.loadFromStorage();
-              }
-            } catch (error) {
-              console.error('Failed to load account from API:', error);
-              this.loadFromStorage();
-            }
+            this.loadFromStorage();
           }
 
           loadFromStorage() {
@@ -702,39 +687,10 @@
             return this.currentAccount;
           }
 
-          // Method to sync account to server
-          async syncToServer(account) {
-            try {
-              const response = await fetch('/api/current-account', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                credentials: 'same-origin',
-                body: JSON.stringify(account)
-              });
-              
-              if (!response.ok) {
-                console.warn('Failed to sync account to server:', response.statusText);
-                return;
-              }
-              
-              const data = await response.json();
-              if (data.status === 'success' && data.data && data.data.success) {
-                console.log('Account synced to server successfully:', data.data.message);
-              } else {
-                console.warn('Server sync response:', data);
-              }
-            } catch (error) {
-              console.warn('Server sync failed (non-critical):', error);
-            }
-          }
-
-          // Enhanced switch account method with server sync
+          // Enhanced switch account method (removed server sync)
           async switchAccountWithSync(account) {
             this.setAccount(account);
             this.saveToStorage(account);
-            await this.syncToServer(account);
           }
         }
 
